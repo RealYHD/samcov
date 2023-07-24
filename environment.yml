@@ -1,0 +1,13 @@
+name: samcov
+channels:
+  - conda-forge
+  - bioconda
+dependencies:
+  - python
+  - pip
+  - python-build
+  - pytest
+  - pytest-cov
+  - twine
+  - sphinx
+  - pysam
