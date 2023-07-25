@@ -24,6 +24,7 @@ logger.addHandler(ch)
 
 
 def run():
+    # TODO fix logging
     parser = argparse.ArgumentParser(
         description="A simple SAM/BAM file coverage extraction tool.")
     parser.add_argument("input", nargs="+", type=str,
