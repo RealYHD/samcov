@@ -1,8 +1,14 @@
 import csv
 from tqdm import trange
+import logging
+
+logger = logging.getLogger(__name__)
 
 def export_coverages_as_csv(coverage_maps: dict[str, list[int]], output_path: str, sparse: bool):
     length = None
+    logger.info("Beginning export of coverage data as CSV")
+    if sparse:
+        logger.info("CSV will be sparse")
     for coverage_map in coverage_maps.values():
         if length is None or len(coverage_map) > length:
             length = len(coverage_map)

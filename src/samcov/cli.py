@@ -3,11 +3,9 @@ from samcov import export
 import argparse
 import logging
 
-logger = logging.getLogger(__name__)
-
-# create console handler and set level to debug
-ch = logging.StreamHandler()
-ch.setLevel(logging.DEBUG)
+# create logger
+logger = logging.getLogger()
+logger.setLevel(logging.DEBUG)
 
 # create console handler and set level to debug
 ch = logging.StreamHandler()
@@ -24,14 +22,13 @@ logger.addHandler(ch)
 
 
 def run():
-    # TODO fix logging
     parser = argparse.ArgumentParser(
         description="A simple SAM/BAM file coverage extraction tool.")
     parser.add_argument("input", nargs="+", type=str,
                         help="The SAM/BAM files to extract coverages upon.", metavar="I")
     parser.add_argument("--csv", type=str, help="Path to output as a CSV", metavar="o",required=False, default="")
     parser.add_argument("--sparse-csv", type=str, help="Path to output as a sparse CSV", metavar="o",required=False, default="")
-    logger.info("Beginning coverage extraction...")
+    logger.info("SAM Coverage extraction tool")
     args = parser.parse_args()
     coverage_maps = count.count_all_sam_positions(args.input)
     if args.csv:
@@ -41,3 +38,7 @@ def run():
 
 def main():
     run()
+
+
+if __name__ == "__main__":
+    main()
