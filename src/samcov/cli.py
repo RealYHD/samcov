@@ -27,7 +27,7 @@ def run():
     parser.add_argument("input", nargs="+", type=str,
                         help="The SAM/BAM files to extract coverages upon.", metavar="I")
     parser.add_argument("--csv", type=str, help="Path to output as a CSV", metavar="o",required=False, default="")
-    parser.add_argument("--sparse-csv", type=str, help="Path to output as a sparse CSV", metavar="o",required=False, default="")
+    parser.add_argument("--sparse-csv", type=str, help="Path to output as a sparse CSV where rows that sum to 0 are not exported.", metavar="o",required=False, default="")
     logger.info("SAM Coverage extraction tool")
     args = parser.parse_args()
     coverage_maps = count.count_all_sam_positions(args.input)
