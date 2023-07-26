@@ -26,12 +26,14 @@ def count_sam_positions(sam_path: str):
         sys.stdout.write("\033[F")
     sys.stdout.write("\n")
     logger.info("Completed coverage retrieval from SAM files.")
-    return coverage_maps
+    return coverage_maps, max(sam.lengths)
 
 def count_all_sam_positions(sam_paths: Iterable[str]):
     coverage_maps = {}
+    lengths = []
     for sam_path in sam_paths:
-        sam_coverage_maps = count_sam_positions(sam_path)
+        sam_coverage_maps, max_length = count_sam_positions(sam_path)
+        lengths.append(max_length)
         for reference_name, coverage_map in sam_coverage_maps.items():
             coverage_maps[f"{path.basename(sam_path)}/{reference_name}"] = coverage_map
-    return coverage_maps
+    return coverage_maps, int(max(lengths))

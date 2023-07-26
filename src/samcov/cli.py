@@ -1,4 +1,4 @@
-from samcov import count
+from samcov import count, metrics
 from samcov import export
 import argparse
 import logging
@@ -26,15 +26,21 @@ def run():
         description="A simple SAM/BAM file coverage extraction tool.")
     parser.add_argument("input", nargs="+", type=str,
                         help="The SAM/BAM files to extract coverages upon.", metavar="I")
-    parser.add_argument("--csv", type=str, help="Path to output as a CSV", metavar="o",required=False, default="")
-    parser.add_argument("--sparse-csv", type=str, help="Path to output as a sparse CSV where rows that sum to 0 are not exported.", metavar="o",required=False, default="")
-    logger.info("SAM Coverage extraction tool")
+    parser.add_argument("--csv", type=str, help="Path to output as a CSV", required=False, default="")
+    parser.add_argument("--centers-csv", type=str, help="Path to output as a CSV of center measures of each position.", required=False, default="")
+    parser.add_argument("--sparse", action="store_true", help="Whether or not output should be as sparse as possible.", required=False, default=False)
+    parser.add_argument("--verbosity", type=str, help="Sets the verbosity of the output", required=False, default="INFO")
+    
     args = parser.parse_args()
-    coverage_maps = count.count_all_sam_positions(args.input)
+    logger.setLevel(args.verbosity)
+    logger.debug("Verbosity set to: %s", args.verbosity)
+    logger.info("SAM Coverage extraction tool")
+    coverage_maps, max_length = count.count_all_sam_positions(args.input)
     if args.csv:
-        export.export_coverages_as_csv(coverage_maps, args.csv, False)
-    if args.sparse_csv:
-        export.export_coverages_as_csv(coverage_maps, args.sparse_csv, True)
+        export.export_coverages_as_csv(coverage_maps, max_length, args.csv, args.sparse)
+    if args.centers_csv:
+        center_measures = metrics.measure_centers(coverage_maps, max_length)
+        export.export_centers_as_csv(center_measures, max_length, args.centers_csv, args.sparse)
 
 def main():
     run()

@@ -1,24 +1,20 @@
 import csv
 from tqdm import trange
 import logging
+from typing import Union
 
 logger = logging.getLogger(__name__)
 
-def export_coverages_as_csv(coverage_maps: dict[str, list[int]], output_path: str, sparse: bool):
-    length = None
+def export_coverages_as_csv(coverage_maps: dict[str, dict[int, int]], length, output_path: str, sparse: bool):
     logger.info("Beginning export of coverage data as CSV")
     if sparse:
         logger.info("CSV will be sparse")
-    for coverage_map in coverage_maps.values():
-        if length is None or len(coverage_map) > length:
-            length = len(coverage_map)
-    if length is None:
-        raise AttributeError("Coverage maps are empty!")
     with open(output_path, "w") as coverage_stream:
         csv_writer = csv.writer(coverage_stream)
         coverage_names = list(coverage_maps.keys())
-        header = ["position", *coverage_maps.keys()]
-        csv_writer.writerow(header)
+        headers = ["position", *coverage_names]
+        logger.debug("Using the following headers: %s", headers)
+        csv_writer.writerow(headers)
         for i in trange(length, unit="row", smoothing=0.5):
             row = [i]
             coverage_sum = 0
@@ -30,4 +26,30 @@ def export_coverages_as_csv(coverage_maps: dict[str, list[int]], output_path: st
                 if coverage_sum > 0:
                     csv_writer.writerow(row)
             else:
+                csv_writer.writerow(row)
+
+def export_centers_as_csv(stat_centers: dict[str, dict[int, float]], length: int, output_path: str, sparse: bool):
+    logger.info("Beginning export of statistical center measures")
+    if sparse:
+        logger.info("Centers CSV will be sparse.")
+    with open(output_path, "w") as centers_stream:
+        csv_writer = csv.writer(centers_stream)
+        measure_names = list(stat_centers.keys())
+        headers = ["position", *measure_names]
+        logger.debug("Using the following headers: %s", headers)
+        csv_writer.writerow(headers)
+        for i in trange(length, unit="row", smoothing=0.5):
+            row: list[Union[int, float]] = [i]
+            has_data = True
+            for measure_name in measure_names:
+                if not i in stat_centers[measure_name]:
+                    has_data = False
+                    break
+                row.append(stat_centers[measure_name][i] if i in stat_centers[measure_name] else 0)
+            if sparse:
+                if has_data:
+                    csv_writer.writerow(row)
+            else:
+                if not has_data:
+                    row.extend([0] * len(measure_names))
                 csv_writer.writerow(row)
