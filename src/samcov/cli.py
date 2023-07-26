@@ -28,6 +28,8 @@ def run():
                         help="The SAM/BAM files to extract coverages upon.", metavar="I")
     parser.add_argument("--csv", type=str, help="Path to output as a CSV", required=False, default="")
     parser.add_argument("--centers-csv", type=str, help="Path to output as a CSV of center measures of each position.", required=False, default="")
+    parser.add_argument("--low-coverage-csv", type=str, help="Path to output low coverage ranges as a CSV.", required=False, default="")
+    parser.add_argument("--low-coverage", type=int, help="A number that is to be considered low coverage.", required=False, default=1)
     parser.add_argument("--sparse", action="store_true", help="Whether or not output should be as sparse as possible.", required=False, default=False)
     parser.add_argument("--verbosity", type=str, help="Sets the verbosity of the output", required=False, default="INFO")
     
@@ -41,6 +43,9 @@ def run():
     if args.centers_csv:
         center_measures = metrics.measure_centers(coverage_maps, max_length)
         export.export_centers_as_csv(center_measures, max_length, args.centers_csv, args.sparse)
+    if args.low_coverage_csv:
+        low_coverage_ranges = metrics.calculate_consecutive_low_coverage(coverage_maps, max_length, args.low_coverage)
+        export.export_low_coverage_csv(low_coverage_ranges, max_length, args.low_coverage_csv)
 
 def main():
     run()

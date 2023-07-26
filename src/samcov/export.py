@@ -1,5 +1,5 @@
 import csv
-from tqdm import trange
+from tqdm import trange, tqdm
 import logging
 from typing import Union
 
@@ -53,3 +53,13 @@ def export_centers_as_csv(stat_centers: dict[str, dict[int, float]], length: int
                 if not has_data:
                     row.extend([0] * len(measure_names))
                 csv_writer.writerow(row)
+
+def export_low_coverage_csv(ranges: dict[str, list[list[int]]], length: int, output_path: str):
+    logger.info("Beginning export of low coverage areas CSV")
+    with open(output_path, "w") as low_coverage_stream:
+        csv_writer = csv.writer(low_coverage_stream)
+        rows = ["sample", "low coverage ranges"]
+        csv_writer.writerow(rows)
+        for sample_name, low_cov in tqdm(ranges.items(), unit="sample"):
+            pretty_ranges = ", ".join([str(cov_range) for cov_range in low_cov])
+            csv_writer.writerow([sample_name, pretty_ranges])
