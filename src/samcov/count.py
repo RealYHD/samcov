@@ -18,7 +18,7 @@ def count_sam_positions(sam_path: str):
         last_pos = 0
         iterations = 0
         with tqdm(total=length, unit="col", smoothing=0.5, desc=reference_name) as progress:
-            for read_col in sam.pileup(reference=reference_name):
+            for read_col in sam.pileup(reference=reference_name, stepper="all"):
                 coverage_maps[reference_name][read_col.pos] = read_col.n
                 progress.update(read_col.pos - last_pos)
                 last_pos = read_col.pos
