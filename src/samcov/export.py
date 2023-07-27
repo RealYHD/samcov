@@ -5,7 +5,7 @@ from typing import Union
 
 logger = logging.getLogger(__name__)
 
-def export_coverages_as_csv(coverage_maps: dict[str, dict[int, int]], length, output_path: str, sparse: bool):
+def export_coverages_as_csv(coverage_maps: dict[str, dict[int, int]], length, output_path: str, sparse: bool, shift: int = 0):
     logger.info("Beginning export of coverage data as CSV")
     if sparse:
         logger.info("CSV will be sparse")
@@ -16,7 +16,7 @@ def export_coverages_as_csv(coverage_maps: dict[str, dict[int, int]], length, ou
         logger.debug("Using the following headers: %s", headers)
         csv_writer.writerow(headers)
         for i in trange(length, unit="row", smoothing=0.5):
-            row = [i]
+            row = [i + shift]
             coverage_sum = 0
             for coverage_name in coverage_names:
                 coverage = coverage_maps[coverage_name][i] if i in coverage_maps[coverage_name] else 0
@@ -28,7 +28,7 @@ def export_coverages_as_csv(coverage_maps: dict[str, dict[int, int]], length, ou
             else:
                 csv_writer.writerow(row)
 
-def export_centers_as_csv(stat_centers: dict[str, dict[int, float]], length: int, output_path: str, sparse: bool):
+def export_centers_as_csv(stat_centers: dict[str, dict[int, float]], length: int, output_path: str, sparse: bool, shift: int = 0):
     logger.info("Beginning export of statistical center measures")
     if sparse:
         logger.info("Centers CSV will be sparse.")
@@ -45,7 +45,7 @@ def export_centers_as_csv(stat_centers: dict[str, dict[int, float]], length: int
                 if not i in stat_centers[measure_name]:
                     has_data = False
                     break
-                row.append(stat_centers[measure_name][i] if i in stat_centers[measure_name] else 0)
+                row.append((stat_centers[measure_name][i] if i in stat_centers[measure_name] else 0) + shift)
             if sparse:
                 if has_data:
                     csv_writer.writerow(row)
@@ -54,12 +54,12 @@ def export_centers_as_csv(stat_centers: dict[str, dict[int, float]], length: int
                     row.extend([0] * len(measure_names))
                 csv_writer.writerow(row)
 
-def export_low_coverage_csv(ranges: dict[str, list[list[int]]], length: int, output_path: str):
+def export_low_coverage_csv(ranges: dict[str, list[list[int]]], length: int, output_path: str, shift: int = 0):
     logger.info("Beginning export of low coverage areas CSV")
     with open(output_path, "w") as low_coverage_stream:
         csv_writer = csv.writer(low_coverage_stream)
         rows = ["sample", "low coverage ranges"]
         csv_writer.writerow(rows)
         for sample_name, low_cov in tqdm(ranges.items(), unit="sample"):
-            pretty_ranges = ", ".join(["-".join([str(pos) for pos in cov_range]) for cov_range in low_cov])
+            pretty_ranges = ", ".join([str([pos + shift for pos in cov_range]) for cov_range in low_cov])
             csv_writer.writerow([sample_name, pretty_ranges])
