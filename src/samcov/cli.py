@@ -30,7 +30,7 @@ def run():
     parser.add_argument("--centers-csv", type=str, help="Path to output as a CSV of center measures of each position.", required=False, default="")
     parser.add_argument("--low-coverage-csv", type=str, help="Path to output low coverage ranges as a CSV.", required=False, default="")
     parser.add_argument("--low-coverage", type=int, help="A number that is to be considered low coverage.", required=False, default=1)
-    parser.add_argument("--startat1", action="store_true", help="Starts indexing by 1 instead of 0", default=False, required=False)
+    parser.add_argument("--start-at", type=int, help="Starts at an index rather than 0", default=0, required=False)
     parser.add_argument("--sparse", action="store_true", help="Whether or not output should be as sparse as possible.", required=False, default=False)
     parser.add_argument("--verbosity", type=str, help="Sets the verbosity of the output", required=False, default="INFO")
     
@@ -38,18 +38,19 @@ def run():
     logger.setLevel(args.verbosity)
     logger.debug("Verbosity set to: %s", args.verbosity)
     logger.info("SAM Coverage extraction tool")
-    shift = 0
-    if args.startat1:
-        shift = 1
-    coverage_maps, max_length = count.count_all_sam_positions(args.input)
+    if args.start_at:
+        logger.info("All results will start at %d.", args.start_at)
+    
+    start_position = args.start_at
+    coverage_maps, max_length = count.count_all_sam_positions(args.input, start_position)
     if args.csv:
-        export.export_coverages_as_csv(coverage_maps, max_length, args.csv, args.sparse, shift=shift)
+        export.export_coverages_as_csv(coverage_maps, max_length, args.csv, args.sparse)
     if args.centers_csv:
         center_measures = metrics.measure_centers(coverage_maps, max_length)
-        export.export_centers_as_csv(center_measures, max_length, args.centers_csv, args.sparse, shift=shift)
+        export.export_centers_as_csv(center_measures, max_length, args.centers_csv, args.sparse)
     if args.low_coverage_csv:
         low_coverage_ranges = metrics.calculate_consecutive_low_coverage(coverage_maps, max_length, args.low_coverage)
-        export.export_low_coverage_csv(low_coverage_ranges, max_length, args.low_coverage_csv, shift=shift)
+        export.export_low_coverage_csv(low_coverage_ranges, max_length, args.low_coverage_csv)
 
 def main():
     run()
