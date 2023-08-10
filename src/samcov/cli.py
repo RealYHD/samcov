@@ -1,5 +1,4 @@
-from samcov import count, metrics
-from samcov import export
+from samcov import count, metrics, export, consensus
 import argparse
 import logging
 
@@ -33,7 +32,7 @@ def run():
     parser.add_argument("--start-at", type=int, help="Sets the first position.", default=0, required=False)
     parser.add_argument("--sparse", action="store_true", help="Whether or not output should be as sparse as possible.", required=False, default=False)
     parser.add_argument("--verbosity", type=str, help="Sets the verbosity of the output", required=False, default="INFO")
-    
+    parser.add_argument("--consensus", type=str, help="Generates consensus sequences at the specified output directory.", required=False, default="")
     args = parser.parse_args()
     logger.setLevel(args.verbosity)
     logger.debug("Verbosity set to: %s", args.verbosity)
@@ -50,6 +49,8 @@ def run():
     if args.low_coverage_csv:
         low_coverage_ranges = metrics.calculate_consecutive_low_coverage(coverage_maps, max_length, args.low_coverage)
         export.export_low_coverage_csv(low_coverage_ranges, max_length, args.low_coverage_csv, start_pos=start_pos)
+    if args.consensus:
+        consensus.generate_all_consensus(*args.input, output_folder=args.consensus)
 
 def main():
     run()
