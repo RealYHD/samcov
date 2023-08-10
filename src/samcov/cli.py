@@ -11,7 +11,7 @@ ch = logging.StreamHandler()
 ch.setLevel(logging.DEBUG)
 
 # create formatter
-formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+formatter = logging.Formatter("%(asctime)s - %(name)s - %(levelname)s - %(message)s")
 
 # add formatter to ch
 ch.setFormatter(formatter)
@@ -22,17 +22,67 @@ logger.addHandler(ch)
 
 def run():
     parser = argparse.ArgumentParser(
-        description="A simple SAM/BAM file coverage extraction tool.")
-    parser.add_argument("input", nargs="+", type=str,
-                        help="The SAM/BAM files to extract coverages upon.", metavar="I")
-    parser.add_argument("--csv", type=str, help="Path to output as a CSV", required=False, default="")
-    parser.add_argument("--centers-csv", type=str, help="Path to output as a CSV of center measures of each position.", required=False, default="")
-    parser.add_argument("--low-coverage-csv", type=str, help="Path to output low coverage ranges as a CSV.", required=False, default="")
-    parser.add_argument("--low-coverage", type=int, help="A number that is to be considered low coverage.", required=False, default=1)
-    parser.add_argument("--start-at", type=int, help="Sets the first position.", default=0, required=False)
-    parser.add_argument("--sparse", action="store_true", help="Whether or not output should be as sparse as possible.", required=False, default=False)
-    parser.add_argument("--verbosity", type=str, help="Sets the verbosity of the output", required=False, default="INFO")
-    parser.add_argument("--consensus", type=str, help="Generates consensus sequences at the specified output directory.", required=False, default="")
+        description="A simple SAM/BAM file coverage extraction tool."
+    )
+    parser.add_argument(
+        "input",
+        nargs="+",
+        type=str,
+        help="The SAM/BAM files to extract coverages upon.",
+        metavar="I",
+    )
+    parser.add_argument(
+        "--csv", type=str, help="Path to output as a CSV", required=False, default=""
+    )
+    parser.add_argument(
+        "--centers-csv",
+        type=str,
+        help="Path to output as a CSV of center measures of each position.",
+        required=False,
+        default="",
+    )
+    parser.add_argument(
+        "--low-coverage-csv",
+        type=str,
+        help="Path to output low coverage ranges as a CSV.",
+        required=False,
+        default="",
+    )
+    parser.add_argument(
+        "--low-coverage",
+        type=int,
+        help="A number that is to be considered low coverage.",
+        required=False,
+        default=1,
+    )
+    parser.add_argument(
+        "--start-at",
+        type=int,
+        help="Sets the first position.",
+        default=0,
+        required=False,
+    )
+    parser.add_argument(
+        "--sparse",
+        action="store_true",
+        help="Whether or not output should be as sparse as possible.",
+        required=False,
+        default=False,
+    )
+    parser.add_argument(
+        "--verbosity",
+        type=str,
+        help="Sets the verbosity of the output",
+        required=False,
+        default="INFO",
+    )
+    parser.add_argument(
+        "--consensus",
+        type=str,
+        help="Generates consensus sequences at the specified output directory.",
+        required=False,
+        default="",
+    )
     args = parser.parse_args()
     logger.setLevel(args.verbosity)
     logger.debug("Verbosity set to: %s", args.verbosity)
@@ -42,15 +92,33 @@ def run():
         logger.info("Start set to %d.", start_pos)
     coverage_maps, max_length = count.count_all_sam_positions(args.input)
     if args.csv:
-        export.export_coverages_as_csv(coverage_maps, max_length, args.csv, args.sparse, start_pos=start_pos)
+        export.export_coverages_as_csv(
+            coverage_maps, max_length, args.csv, args.sparse, start_pos=start_pos
+        )
     if args.centers_csv:
         center_measures = metrics.measure_centers(coverage_maps, max_length)
-        export.export_centers_as_csv(center_measures, max_length, args.centers_csv, args.sparse, start_pos=start_pos)
+        export.export_centers_as_csv(
+            center_measures,
+            max_length,
+            args.centers_csv,
+            args.sparse,
+            start_pos=start_pos,
+        )
     if args.low_coverage_csv:
-        low_coverage_ranges = metrics.calculate_consecutive_low_coverage(coverage_maps, max_length, args.low_coverage)
-        export.export_low_coverage_csv(low_coverage_ranges, max_length, args.low_coverage_csv, start_pos=start_pos)
+        low_coverage_ranges = metrics.calculate_consecutive_low_coverage(
+            coverage_maps, max_length, args.low_coverage
+        )
+        export.export_low_coverage_csv(
+            low_coverage_ranges, max_length, args.low_coverage_csv, start_pos=start_pos
+        )
     if args.consensus:
-        consensus.generate_all_consensus(*args.input, output_folder=args.consensus)
+        if consensus.check_for_samtools():
+            consensus.generate_all_consensus(*args.input, output_folder=args.consensus)
+        else:
+            logger.warning(
+                "The --consensus argument requires samtools to be installed. No samtools was detected. Ignoring argument."
+            )
+
 
 def main():
     run()
