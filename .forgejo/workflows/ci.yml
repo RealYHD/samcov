@@ -1,0 +1,64 @@
+name: Release
+
+on:
+  push:
+    branches: [main]
+
+jobs:
+  test:
+    runs-on: docker
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version: ["3.10", "3.11", "3.12", "3.14"]
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: astral-sh/setup-uv@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+          enable-cache: false
+          activate-environment: "true"
+
+      - name: Install dependencies
+        run: uv pip install -e ".[dev]"
+
+      - name: Run tests
+        run: uv run pytest tests/ -v
+
+  release:
+    needs:
+      - test
+    runs-on: docker
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          token: ${{ secrets.PKG_RELEASE_TOKEN }}
+
+      - uses: astral-sh/setup-uv@v5
+        with:
+          python-version: 3.14
+          enable-cache: false
+          activate-environment: "true"
+
+      - name: Install Node deps
+        run: npm ci
+
+      - name: Git identity
+        run: |
+          git config user.name "semantic-release"
+          git config user.email "<>"
+
+      - name: Semantic Release
+        env:
+          GIT_AUTHOR_NAME: semantic-release
+          GIT_AUTHOR_EMAIL: <>
+          GIT_COMMITTER_NAME: semantic-release
+          GIT_COMMITTER_EMAIL: <>
+          TWINE_USERNAME: ydeng
+          TWINE_PASSWORD: ${{ secrets.PKG_RELEASE_TOKEN }}
+          TWINE_REPOSITORY_URL: https://git.reslate.solutions/api/packages/ydeng/pypi/
+          HUSKY: 0
+        run: npx semantic-release

@@ -208,3 +208,5 @@ pip-selfcheck.json
 
 # Conda
 env
+# JavaScript
+node_modules/
