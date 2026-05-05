@@ -4,11 +4,12 @@ import logging
 
 logger = logging.getLogger(__name__)
 
+
 def measure_centers(coverage_maps: dict[str, dict[int, int]], length: int):
     statistics_centers = {
         "mean": {},
         "median": {},
-        "mode": {}
+        "mode": {},
     }
     logger.info("Calculating center statistics")
     for i in trange(length, unit="col", smoothing=0.5):
@@ -19,13 +20,21 @@ def measure_centers(coverage_maps: dict[str, dict[int, int]], length: int):
             continue
         statistics_centers["mean"][i] = statistics.fmean(across_samples)
         statistics_centers["median"][i] = statistics.median(across_samples)
-        statistics_centers["mode"][i] = statistics.mode(across_samples)
+        statistics_centers["mode"][i] = statistics.multimode(across_samples)[0]
     return statistics_centers
 
-def calculate_consecutive_low_coverage(coverage_maps: dict[str, dict[int, int]], length: int, threshold=1):
+
+def calculate_consecutive_low_coverage(
+    coverage_maps: dict[str, dict[int, int]],
+    length: int,
+    threshold: int = 1,
+):
     ranges: dict[str, list[list[int]]] = {}
     logger.info("Finding continuous low-coverage regions.")
-    logger.info("Everything position with coverages lower than %d will be considered low-coverage.", threshold)
+    logger.info(
+        "Every position with coverage lower than %d will be considered low-coverage.",
+        threshold,
+    )
     for sample_name, coverage_map in tqdm(coverage_maps.items(), unit="pos", smoothing=0.5):
         ranges[sample_name] = []
         last_pos = -1

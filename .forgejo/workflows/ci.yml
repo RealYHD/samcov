@@ -56,7 +56,7 @@ jobs:
           GIT_COMMITTER_NAME: semantic-release
           GIT_COMMITTER_EMAIL: <>
           TWINE_USERNAME: ydeng
-          TWINE_PASSWORD: ${{ secrets.PKG_RELEASE_TOKEN }}
+          TWINE_PASSWORD: ${{ secrets.PACKAGE_UPLOAD_TOKEN }}
           TWINE_REPOSITORY_URL: https://git.reslate.solutions/api/packages/ydeng/pypi/
           HUSKY: 0
         run: npx semantic-release

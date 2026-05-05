@@ -2,7 +2,6 @@ import csv
 from tqdm import trange, tqdm
 import logging
 from typing import Union
-from Bio import SeqIO, Seq, SeqRecord
 
 logger = logging.getLogger(__name__)
 
@@ -24,7 +23,7 @@ def export_coverages_as_csv(
         logger.debug("Using the following headers: %s", headers)
         csv_writer.writerow(headers)
         for i in trange(length, unit="row", smoothing=0.5):
-            row = [i + start_pos]
+            row: list[Union[int, float]] = [i + start_pos]
             coverage_sum = 0
             for coverage_name in coverage_names:
                 coverage = (
@@ -58,26 +57,23 @@ def export_centers_as_csv(
         logger.debug("Using the following headers: %s", headers)
         csv_writer.writerow(headers)
         for i in trange(length, unit="row", smoothing=0.5):
-            row: list[Union[int, float]] = [i]
+            row: list[Union[int, float]] = [i + start_pos]
             has_data = True
             for measure_name in measure_names:
-                if not i in stat_centers[measure_name]:
+                if i not in stat_centers[measure_name]:
                     has_data = False
                     break
                 row.append(
-                    (
-                        stat_centers[measure_name][i]
-                        if i in stat_centers[measure_name]
-                        else 0
-                    )
-                    + start_pos
+                    stat_centers[measure_name][i]
+                    if i in stat_centers[measure_name]
+                    else 0
                 )
             if sparse:
                 if has_data:
                     csv_writer.writerow(row)
             else:
                 if not has_data:
-                    row.extend([0] * len(measure_names))
+                    row.extend([0.0] * len(measure_names))
                 csv_writer.writerow(row)
 
 
