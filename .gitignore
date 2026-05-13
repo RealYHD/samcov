@@ -210,3 +210,6 @@ pip-selfcheck.json
 env
 # JavaScript
 node_modules/
+
+# Allow project scripts/ directory (ignored by venv template)
+!scripts/

@@ -12,4 +12,3 @@ dependencies:
   - sphinx
   - pysam
   - tqdm
-  - biopython

@@ -29,19 +29,45 @@ def calculate_consecutive_low_coverage(
     length: int,
     threshold: int = 1,
 ):
+    """Find contiguous low-coverage regions per sample.
+
+    A position is "low coverage" when its depth is **strictly below**
+    *threshold*.  Gaps between high-coverage positions are reported as
+    ``[start, end]`` (both inclusive, zero-based).
+
+    Parameters
+    ----------
+    coverage_maps
+        Mapping of ``sample_name → {position: depth}``.  Only positions
+        ``< length`` are considered.
+    length
+        Total length of the reference sequence (number of positions).
+    threshold
+        Depth values below this are treated as low coverage.  Default 1.
+
+    Returns
+    -------
+    dict[str, list[list[int]]]
+        Per-sample list of ``[start, end]`` low-coverage ranges.
+    """
     ranges: dict[str, list[list[int]]] = {}
     logger.info("Finding continuous low-coverage regions.")
     logger.info(
         "Every position with coverage lower than %d will be considered low-coverage.",
         threshold,
     )
-    for sample_name, coverage_map in tqdm(coverage_maps.items(), unit="pos", smoothing=0.5):
+    for sample_name, coverage_map in tqdm(
+        coverage_maps.items(), unit="pos", smoothing=0.5
+    ):
         ranges[sample_name] = []
         last_pos = -1
-        for pos, coverage in coverage_map.items():
-            if coverage < threshold:
+        for pos, coverage in sorted(coverage_map.items()):
+            if pos >= length or coverage < threshold:
                 continue
             if pos - last_pos > 1:
                 ranges[sample_name].append([last_pos + 1, pos - 1])
             last_pos = pos
+        # Report trailing gap from last high-coverage position to end of sequence
+        if last_pos >= 0 and last_pos < length - 1:
+            ranges[sample_name].append([last_pos + 1, length - 1])
     return ranges
