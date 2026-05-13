@@ -6,14 +6,17 @@ Extract per-base coverage from SAM/BAM alignment files, compute aggregate statis
 
 ## Features
 
-- **Per-base coverage extraction** from SAM or BAM files via `pysam`
+- **Per-base coverage extraction** from SAM or BAM files via `samtools depth`
 - **Multi-sample aggregation** — collect coverage maps from any number of alignments
 - **Statistical summaries** — mean, median, and mode coverage per position across samples
 - **Low-coverage region detection** — find contiguous gaps below a configurable depth threshold
 - **Consensus generation** — produce FASTA consensus sequences with `samtools consensus`
 - **CSV export** — sparse or dense output for downstream analysis in R, pandas, Excel, etc.
 
-## Installation
+## System Requirements
+
+- Python >= 3.10
+- [samtools](http://www.htslib.org/) (>= 1.20) must be installed on your `PATH`. The tool uses `samtools depth` for coverage extraction and `samtools consensus` for FASTA generation.
 
 ### From the Reslate Solutions package registry
 

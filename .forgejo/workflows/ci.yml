@@ -20,6 +20,11 @@ jobs:
           enable-cache: false
           activate-environment: "true"
 
+      - name: Install system dependencies
+        run: |
+          apt-get update -q
+          apt-get install -y -q samtools
+
       - name: Install dependencies
         run: uv pip install -e ".[dev]"
 

@@ -10,5 +10,5 @@ dependencies:
   - pytest-cov
   - twine
   - sphinx
-  - pysam
+  - samtools>=1.20
   - tqdm
