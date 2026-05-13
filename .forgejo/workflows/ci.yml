@@ -41,6 +41,13 @@ jobs:
           enable-cache: false
           activate-environment: "true"
 
+      - name: Install rattler-build
+        run: |
+          curl -fsSL -o /usr/local/bin/rattler-build \
+            https://github.com/prefix-dev/rattler-build/releases/download/v0.64.1/rattler-build-x86_64-unknown-linux-musl
+          chmod +x /usr/local/bin/rattler-build
+          rattler-build --version
+
       - name: Install Node deps
         run: npm ci
 
@@ -58,5 +65,6 @@ jobs:
           TWINE_USERNAME: ydeng
           TWINE_PASSWORD: ${{ secrets.PACKAGE_UPLOAD_TOKEN }}
           TWINE_REPOSITORY_URL: https://git.reslate.solutions/api/packages/ydeng/pypi/
+          PACKAGE_UPLOAD_TOKEN: ${{ secrets.PACKAGE_UPLOAD_TOKEN }}
           HUSKY: 0
         run: npx semantic-release

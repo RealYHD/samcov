@@ -1,0 +1,39 @@
+context:
+  version: "${{ env.get('SAMCOV_VERSION') }}"
+
+package:
+  name: samcov
+  version: ${{ version }}
+
+source:
+  path: ../
+
+build:
+  number: 0
+  script: python -m pip install . --no-deps --ignore-installed -vv
+  noarch: python
+
+requirements:
+  host:
+    - python >=3.10
+    - pip
+    - setuptools >=77.0.0
+  run:
+    - python >=3.10
+    - pysam >=0.21.0
+    - tqdm >=4.65
+
+tests:
+  - python:
+      imports:
+        - samcov
+  - script:
+      - samcov --help
+
+about:
+  summary: "A simple SAM/BAM file coverage extraction tool"
+  description: |
+    samcov reads SAM/BAM files and calculates coverage statistics,
+    including shared low-coverage regions across multiple samples.
+  license: MIT
+  license_file: LICENSE

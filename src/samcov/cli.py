@@ -1,3 +1,4 @@
+import os
 from samcov import count, metrics, export, consensus
 import argparse
 import logging
@@ -19,6 +20,16 @@ ch.setFormatter(formatter)
 # add ch to logger
 logger.addHandler(ch)
 
+
+def validate_inputs(inputs):
+    """Ensure all input files exist and are readable."""
+    for path in inputs:
+        if not os.path.exists(path):
+            logger.error("Input file not found: %s", path)
+            raise FileNotFoundError(f"Input file not found: {path}")
+        if not os.path.isfile(path):
+            logger.error("Not a file: %s", path)
+            raise ValueError(f"Not a file: {path}")
 
 def run():
     parser = argparse.ArgumentParser(
@@ -108,6 +119,7 @@ def run():
     logger.setLevel(args.verbosity)
     logger.debug("Verbosity set to: %s", args.verbosity)
     logger.info("SAM Coverage extraction tool")
+    validate_inputs(args.input)
     start_pos = args.start_at
     if start_pos:
         logger.info("Start set to %d.", start_pos)
