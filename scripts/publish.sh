@@ -5,9 +5,15 @@ VERSION="$1"
 
 echo "=== Publishing samcov ${VERSION} ==="
 
-# ── PyPI (Forgejo) ──
-echo "→ Uploading to PyPI registry..."
-uvx -q twine upload --non-interactive dist/*
+# ── PyPI (Forgejo internal registry) ──
+echo "→ Uploading to Forgejo PyPI registry..."
+FORGEJO_PYPI_URL="https://git.reslate.solutions/api/packages/ydeng/pypi/"
+uvx -q twine upload \
+    --repository-url "${FORGEJO_PYPI_URL}" \
+    --username "ydeng" \
+    --password "${PACKAGE_UPLOAD_TOKEN}" \
+    --non-interactive \
+    dist/*
 
 # ── Conda (Forgejo) ──
 echo "→ Building conda package..."
