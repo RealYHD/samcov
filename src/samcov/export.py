@@ -114,3 +114,46 @@ def export_low_coverage_csv(
                 [str([pos + start_pos for pos in cov_range]) for cov_range in low_cov]
             )
             csv_writer.writerow([sample_name, pretty_ranges])
+
+
+# ── BED export helpers ─────────────────────────────────────────────
+
+
+def export_low_coverage_bed(
+    ranges: dict[str, list[list[int]]],
+    output_path: str,
+    start_pos: int = 0,
+    chrom: str = ".",
+):
+    """Export per-sample low-coverage intervals as a BED file.
+
+    BED format: chrom start end name score strand
+    (start is 0-based, end is exclusive)
+    """
+    logger.info("Beginning export of low-coverage regions as BED")
+    with open(output_path, "w") as bed_stream:
+        for sample_name, intervals in tqdm(ranges.items(), unit="sample"):
+            for start, end in intervals:
+                bed_start = start + start_pos
+                bed_end = end + start_pos + 1  # BED end is exclusive
+                bed_stream.write(
+                    f"{chrom}\t{bed_start}\t{bed_end}\t{sample_name}\t0\t+\n"
+                )
+
+
+def export_shared_low_coverage_bed(
+    ranges: list[list[int]],
+    output_path: str,
+    start_pos: int = 0,
+    chrom: str = ".",
+    name: str = "shared_low_coverage",
+):
+    """Export shared low-coverage intervals as a BED file."""
+    logger.info("Beginning export of shared low-coverage regions as BED")
+    with open(output_path, "w") as bed_stream:
+        for start, end in ranges:
+            bed_start = start + start_pos
+            bed_end = end + start_pos + 1  # BED end is exclusive
+            bed_stream.write(
+                f"{chrom}\t{bed_start}\t{bed_end}\t{name}\t0\t+\n"
+            )

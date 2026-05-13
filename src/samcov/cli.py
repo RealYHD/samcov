@@ -84,6 +84,20 @@ def run():
         default="",
     )
     parser.add_argument(
+        "--shared-low-coverage-bed",
+        type=str,
+        help="Path to output shared low-coverage ranges (across all samples) as a BED file.",
+        required=False,
+        default="",
+    )
+    parser.add_argument(
+        "--low-coverage-bed",
+        type=str,
+        help="Path to output per-sample low-coverage ranges as a BED file.",
+        required=False,
+        default="",
+    )
+    parser.add_argument(
         "--consensus",
         type=str,
         help="Generates consensus sequences at the specified output directory.",
@@ -118,6 +132,13 @@ def run():
         export.export_low_coverage_csv(
             low_coverage_ranges, max_length, args.low_coverage_csv, start_pos=start_pos
         )
+    if args.low_coverage_bed:
+        low_coverage_ranges = metrics.calculate_consecutive_low_coverage(
+            coverage_maps, max_length, args.low_coverage
+        )
+        export.export_low_coverage_bed(
+            low_coverage_ranges, args.low_coverage_bed, start_pos=start_pos
+        )
     if args.shared_low_coverage_csv:
         shared_ranges = metrics.calculate_shared_low_coverage(
             coverage_maps, max_length, args.low_coverage
@@ -129,13 +150,13 @@ def run():
             args.low_coverage,
             start_pos=start_pos,
         )
-    if args.consensus:
-        if consensus.check_for_samtools():
-            consensus.generate_all_consensus(*args.input, output_folder=args.consensus)
-        else:
-            logger.warning(
-                "The --consensus argument requires samtools to be installed. No samtools was detected. Ignoring argument."
-            )
+    if args.shared_low_coverage_bed:
+        shared_ranges = metrics.calculate_shared_low_coverage(
+            coverage_maps, max_length, args.low_coverage
+        )
+        export.export_shared_low_coverage_bed(
+            shared_ranges, args.shared_low_coverage_bed, start_pos=start_pos
+        )
 
 
 def main():
