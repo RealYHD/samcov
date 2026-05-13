@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "samcov"
-version = "0.0.10"
+version = "1.0.0-alpha.1"
 description = "A simple SAM/BAM file coverage extraction tool."
 readme = "README.md"
 license = "MIT"
