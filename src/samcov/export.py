@@ -77,6 +77,27 @@ def export_centers_as_csv(
                 csv_writer.writerow(row)
 
 
+def export_shared_low_coverage_csv(
+    ranges: list[list[int]],
+    length: int,
+    output_path: str,
+    threshold: int,
+    start_pos: int = 0,
+):
+    """Export shared low-coverage intervals as a CSV."""
+    logger.info("Beginning export of shared low coverage areas CSV")
+    with open(output_path, "w") as stream:
+        writer = csv.writer(stream)
+        writer.writerow(["start", "end", "length", "threshold"])
+        for start, end in ranges:
+            writer.writerow([
+                start + start_pos,
+                end + start_pos,
+                end - start + 1,
+                threshold,
+            ])
+
+
 def export_low_coverage_csv(
     ranges: dict[str, list[list[int]]],
     length: int,

@@ -51,3 +51,42 @@ def test_calculate_consecutive_low_coverage_all_high():
     """Every position covered should return an empty list."""
     cov = {"s": {i: 5 for i in range(10)}}
     assert metrics.calculate_consecutive_low_coverage(cov, 10) == {"s": []}
+
+
+# ── Shared low-coverage across all samples ──────────────────────────
+
+def test_calculate_shared_low_coverage_basic():
+    """Regions where ALL samples have coverage < threshold."""
+    cov = {
+        "s1": {0: 5, 1: 5, 2: 0, 3: 0, 4: 5},
+        "s2": {0: 5, 1: 0, 2: 0, 3: 0, 4: 5},
+    }
+    # Only positions 2 and 3 have ALL samples < 1 (zero in both)
+    assert metrics.calculate_shared_low_coverage(cov, 5, threshold=1) == [[2, 3]]
+
+
+def test_calculate_shared_low_coverage_trailing():
+    """Shared trailing gap to end of sequence."""
+    cov = {
+        "s1": {0: 5, 1: 5},
+        "s2": {0: 5, 1: 5},
+    }
+    assert metrics.calculate_shared_low_coverage(cov, 10, threshold=1) == [[2, 9]]
+
+
+def test_calculate_shared_low_coverage_all_low():
+    """Every position low in all samples."""
+    cov = {
+        "s1": {},
+        "s2": {},
+    }
+    assert metrics.calculate_shared_low_coverage(cov, 5, threshold=1) == [[0, 4]]
+
+
+def test_calculate_shared_low_coverage_none():
+    """No shared low-coverage regions at all."""
+    cov = {
+        "s1": {0: 5, 1: 5, 2: 5},
+        "s2": {0: 5, 1: 0, 2: 5},
+    }
+    assert metrics.calculate_shared_low_coverage(cov, 3, threshold=1) == []

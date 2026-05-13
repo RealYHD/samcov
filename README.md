@@ -49,16 +49,22 @@ samcov sample1.bam sample2.bam sample3.bam --csv coverage.csv
 # Also compute per-position statistics (mean / median / mode)
 samcov *.bam --csv coverage.csv --centers-csv centers.csv
 
-# Find regions with depth < 5 in any sample
+# Find regions with depth < 5 in ANY sample
 samcov *.bam --low-coverage-csv low_cov.csv --low-coverage 5
+
+# Find regions with depth < 5 in ALL samples (shared gaps)
+samcov *.bam --shared-low-coverage-csv shared_gaps.csv --low-coverage 5
 ```
 
 ## CLI reference
 
 ```
 usage: samcov [-h] [--csv CSV] [--centers-csv CENTERS_CSV]
-              [--low-coverage-csv LOW_COVERAGE_CSV] [--low-coverage LOW_COVERAGE]
-              [--startat1] [--sparse] [--verbosity VERBOSITY]
+              [--low-coverage-csv LOW_COVERAGE_CSV]
+              [--shared-low-coverage-csv SHARED_LOW_COVERAGE_CSV]
+              [--low-coverage LOW_COVERAGE]
+              [--start-at START_AT] [--sparse] [--verbosity VERBOSITY]
+              [--consensus CONSENSUS]
               I [I ...]
 
 positional arguments:
@@ -71,12 +77,16 @@ options:
                         Path to output as a CSV of center measures of each position.
   --low-coverage-csv LOW_COVERAGE_CSV
                         Path to output low coverage ranges as a CSV.
+  --shared-low-coverage-csv SHARED_LOW_COVERAGE_CSV
+                        Path to output shared low-coverage ranges (across all samples) as a CSV.
   --low-coverage LOW_COVERAGE
                         A number that is to be considered low coverage. (default: 1)
-  --startat1            Starts indexing by 1 instead of 0
+  --start-at START_AT   Sets the first position.
   --sparse              Whether or not output should be as sparse as possible.
   --verbosity VERBOSITY
                         Sets the verbosity of the output (default: INFO)
+  --consensus CONSENSUS
+                        Generates consensus sequences at the specified output directory.
 ```
 
 ## Output formats
@@ -105,7 +115,16 @@ Use `--sparse` to omit rows where **all** samples have zero coverage.
 | sample1.bam/ref | [3, 4], [150, 155] |
 | sample2.bam/ref | [2, 5] |
 
-Ranges are **zero-based, inclusive** by default. Use `--startat1` for one-based output.
+### Shared low-coverage CSV (`--shared-low-coverage-csv`)
+
+| start | end | length | threshold |
+|------:|----:|-------:|----------:|
+| 3 | 4 | 2 | 5 |
+| 150 | 155 | 6 | 5 |
+
+Intervals where **all** samples have depth below the threshold. Use this to find consensus assembly gaps or universally problematic regions.
+
+Ranges are **zero-based, inclusive** by default. Use `--start-at` for one-based output.
 
 ## Python API
 
@@ -123,13 +142,17 @@ coverage_maps, max_length = count.count_all_sam_positions(["sample1.bam", "sampl
 # Compute mean / median / mode per position
 centers = metrics.measure_centers(coverage_maps, max_length)
 
-# Find contiguous low-coverage regions (depth < 5)
+# Find contiguous low-coverage regions in ANY sample (depth < 5)
 low_cov = metrics.calculate_consecutive_low_coverage(coverage_maps, max_length, threshold=5)
+
+# Find contiguous low-coverage regions in ALL samples (shared gaps)
+shared_gaps = metrics.calculate_shared_low_coverage(coverage_maps, max_length, threshold=5)
 
 # Export to CSV
 export.export_coverages_as_csv(coverage_maps, max_length, "coverage.csv", sparse=False)
 export.export_centers_as_csv(centers, max_length, "centers.csv", sparse=False)
 export.export_low_coverage_csv(low_cov, max_length, "low_cov.csv")
+export.export_shared_low_coverage_csv(shared_gaps, max_length, "shared_gaps.csv", threshold=5)
 ```
 
 ## Consensus generation

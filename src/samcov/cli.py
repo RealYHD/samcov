@@ -77,6 +77,13 @@ def run():
         default="INFO",
     )
     parser.add_argument(
+        "--shared-low-coverage-csv",
+        type=str,
+        help="Path to output shared low-coverage ranges (across all samples) as a CSV.",
+        required=False,
+        default="",
+    )
+    parser.add_argument(
         "--consensus",
         type=str,
         help="Generates consensus sequences at the specified output directory.",
@@ -110,6 +117,17 @@ def run():
         )
         export.export_low_coverage_csv(
             low_coverage_ranges, max_length, args.low_coverage_csv, start_pos=start_pos
+        )
+    if args.shared_low_coverage_csv:
+        shared_ranges = metrics.calculate_shared_low_coverage(
+            coverage_maps, max_length, args.low_coverage
+        )
+        export.export_shared_low_coverage_csv(
+            shared_ranges,
+            max_length,
+            args.shared_low_coverage_csv,
+            args.low_coverage,
+            start_pos=start_pos,
         )
     if args.consensus:
         if consensus.check_for_samtools():
