@@ -5,7 +5,7 @@
     "@semantic-release/release-notes-generator",
     ["@semantic-release/exec", {
       "prepareCmd": "uv run -q python scripts/update_version.py ${nextRelease.version} && uv build",
-      "publishCmd": "bash scripts/publish.sh ${nextRelease.version}"
+      "publishCmd": "export VERSION=${nextRelease.version} && bash scripts/publish.sh"
     }]
   ]
 }

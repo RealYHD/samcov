@@ -17,7 +17,17 @@ uvx -q twine upload \
 
 # ── Conda (Forgejo) ──
 echo "→ Building conda package..."
-export SAMCOV_VERSION="${VERSION}"
+# Gitea's conda parser rejects versions with dashes (e.g. 1.0.0-alpha.1).
+# Normalize to PEP 440: 1.0.0-alpha.1 → 1.0.0a1
+SAMCOV_VERSION=$(python3 -c "
+import re, sys
+v = sys.argv[1]
+v = re.sub(r'[-_\.](a|alpha)[-_\.]?(\d+)', r'a\2', v, flags=re.IGNORECASE)
+v = re.sub(r'[-_\.](b|beta)[-_\.]?(\d+)', r'b\2', v, flags=re.IGNORECASE)
+v = re.sub(r'[-_\.](rc|c)[-_\.]?(\d+)', r'rc\2', v, flags=re.IGNORECASE)
+print(v)
+" "${VERSION}")
+export SAMCOV_VERSION
 rm -rf output
 RATTLER_BUILD="$(command -v rattler-build || true)"
 if [ -z "${RATTLER_BUILD}" ]; then
@@ -35,8 +45,6 @@ echo "→ Uploading ${CONDA_FILE} to Forgejo conda registry..."
 curl -fsS \
     --user "ydeng:${PACKAGE_UPLOAD_TOKEN}" \
     --upload-file "${CONDA_FILE}" \
-    "https://git.reslate.solutions/api/packages/ydeng/conda/$(basename "${CONDA_FILE}")" || {
-    echo "WARNING: conda upload failed (token may be missing in local runs)" >&2
-}
+    "https://git.reslate.solutions/api/packages/ydeng/conda/$(basename "${CONDA_FILE}")"
 
 echo "=== Done ==="
