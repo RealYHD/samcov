@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-VERSION="$1"
+VERSION="${VERSION:-$1}"
 
 echo "=== Publishing samcov ${VERSION} ==="
 
