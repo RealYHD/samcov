@@ -653,7 +653,7 @@ wheels = [
 
 [[package]]
 name = "samcov"
-version = "0.0.10"
+version = "1.0.0a1"
 source = { editable = "." }
 dependencies = [
     { name = "pysam" },
