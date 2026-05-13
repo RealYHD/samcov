@@ -169,6 +169,17 @@ def run():
         export.export_shared_low_coverage_bed(
             shared_ranges, args.shared_low_coverage_bed, start_pos=start_pos
         )
+    if args.consensus:
+        if not consensus.check_for_samtools():
+            logger.warning(
+                "samtools is not installed on PATH. "
+                "The --consensus option requires samtools. "
+                "Install it (e.g. 'conda install -c bioconda samtools') and retry."
+            )
+            raise RuntimeError(
+                "samtools is required for consensus generation but was not found on PATH."
+            )
+        consensus.generate_all_consensus(*args.input, output_folder=args.consensus)
 
 
 def main():

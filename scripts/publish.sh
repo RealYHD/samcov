@@ -23,11 +23,11 @@ RATTLER_BUILD="$(command -v rattler-build || true)"
 if [ -z "${RATTLER_BUILD}" ]; then
     RATTLER_BUILD="/usr/local/bin/rattler-build"
 fi
-"${RATTLER_BUILD}" build --recipe conda/recipe.yaml --no-test
+"${RATTLER_BUILD}" build --recipe conda/recipe.yaml --no-test --package-format tar-bz2
 
-CONDA_FILE=$(find output -name "*.conda" | head -n1)
+CONDA_FILE=$(find output -name "*.tar.bz2" | head -n1)
 if [ -z "${CONDA_FILE}" ]; then
-    echo "ERROR: No .conda artifact found" >&2
+    echo "ERROR: No .tar.bz2 artifact found" >&2
     exit 1
 fi
 
@@ -35,7 +35,7 @@ echo "→ Uploading ${CONDA_FILE} to Forgejo conda registry..."
 curl -fsS \
     --user "ydeng:${PACKAGE_UPLOAD_TOKEN}" \
     --upload-file "${CONDA_FILE}" \
-    "https://git.reslate.solutions/api/packages/ydeng/conda/main/$(basename "${CONDA_FILE}")" || {
+    "https://git.reslate.solutions/api/packages/ydeng/conda/$(basename "${CONDA_FILE}")" || {
     echo "WARNING: conda upload failed (token may be missing in local runs)" >&2
 }
 
