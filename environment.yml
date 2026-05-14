@@ -12,3 +12,4 @@ dependencies:
   - sphinx
   - samtools>=1.20
   - tqdm
+  - matplotlib>=3.7
