@@ -1,5 +1,5 @@
 import os
-from samcov import count, metrics, export, consensus
+from samcov import count, metrics, export, consensus, visualize
 import argparse
 import logging
 
@@ -31,7 +31,7 @@ def validate_inputs(inputs):
             logger.error("Not a file: %s", path)
             raise ValueError(f"Not a file: {path}")
 
-def run():
+def run(argv=None):
     parser = argparse.ArgumentParser(
         description="A simple SAM/BAM file coverage extraction tool."
     )
@@ -115,7 +115,21 @@ def run():
         required=False,
         default="",
     )
-    args = parser.parse_args()
+    parser.add_argument(
+        "--plot-svg",
+        type=str,
+        help="Path to output a coverage line-plot SVG (one panel per reference).",
+        required=False,
+        default="",
+    )
+    parser.add_argument(
+        "--plot-svg-simple",
+        type=str,
+        help="Path to output a single-panel SVG when all inputs target one reference.",
+        required=False,
+        default="",
+    )
+    args = parser.parse_args(argv)
     logger.setLevel(args.verbosity)
     logger.debug("Verbosity set to: %s", args.verbosity)
     logger.info("SAM Coverage extraction tool")
@@ -180,6 +194,16 @@ def run():
                 "samtools is required for consensus generation but was not found on PATH."
             )
         consensus.generate_all_consensus(*args.input, output_folder=args.consensus)
+
+    if args.plot_svg:
+        visualize.plot_all(
+            coverage_maps, max_length, args.plot_svg, start_pos=start_pos
+        )
+    if args.plot_svg_simple:
+        # simple mode: all keys treated as samples on a single reference
+        visualize.plot_coverage(
+            coverage_maps, max_length, args.plot_svg_simple, start_pos=start_pos
+        )
 
 
 def main():
