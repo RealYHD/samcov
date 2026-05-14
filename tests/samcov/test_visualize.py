@@ -97,3 +97,29 @@ def test_plot_all_with_thresholds(tmp_path):
     assert out.exists()
     text = out.read_text()
     assert "svg" in text
+
+
+def test_plot_coverage_no_total_line(tmp_path):
+    """Regression: show_total=False should suppress the black total line."""
+    cov = {
+        "s1": {0: 5, 1: 10},
+        "s2": {0: 2, 1: 3},
+    }
+    out = tmp_path / "no_total.svg"
+    visualize.plot_coverage(cov, 2, str(out), show_total=False)
+    assert out.exists()
+    text = out.read_text()
+    assert "svg" in text
+
+
+def test_plot_all_no_total_line(tmp_path):
+    """Regression: show_total=False on multi-panel plot."""
+    cov = {
+        "run1/ref1": {0: 5, 1: 0},
+        "run2/ref1": {0: 2, 1: 4},
+    }
+    out = tmp_path / "multi_no_total.svg"
+    visualize.plot_all(cov, 2, str(out), show_total=False)
+    assert out.exists()
+    text = out.read_text()
+    assert "svg" in text

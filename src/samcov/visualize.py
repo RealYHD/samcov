@@ -90,6 +90,7 @@ def plot_coverage(
     chrom_name: str | None = None,
     total_only: bool = False,
     thresholds: list[int] | None = None,
+    show_total: bool = True,
 ):
     """Render a line-plot SVG of coverage across positions.
 
@@ -113,6 +114,8 @@ def plot_coverage(
         List of depth thresholds. For each threshold a colored track is drawn
         below the x-axis showing regions where total coverage is strictly
         below that value.
+    show_total
+        When ``False``, suppress the black total-coverage line.
     """
     logger.info("Generating coverage plot → %s", output_path)
 
@@ -137,7 +140,8 @@ def plot_coverage(
     for p in positions:
         total = sum(cov_map.get(p, 0) for cov_map in coverage_maps.values())
         total_y.append(total)
-    ax.plot(x, total_y, linewidth=1.5, color="black", label="total coverage")
+    if show_total:
+        ax.plot(x, total_y, linewidth=1.5, color="black", label="total coverage")
 
     # threshold tracks below x-axis
     if thresholds:
@@ -164,6 +168,7 @@ def plot_all(
     output_path: str,
     start_pos: int = 0,
     thresholds: list[int] | None = None,
+    show_total: bool = True,
 ):
     """Produce a single SVG with one panel per reference.
 
@@ -197,7 +202,8 @@ def plot_all(
             sum(cov_map.get(p, 0) for cov_map in sample_maps.values())
             for p in positions
         ]
-        ax.plot(x, total_y, linewidth=1.5, color="black", label="total coverage")
+        if show_total:
+            ax.plot(x, total_y, linewidth=1.5, color="black", label="total coverage")
 
         if thresholds:
             _draw_threshold_tracks(ax, total_y, thresholds, x)
