@@ -129,6 +129,13 @@ def run(argv=None):
         required=False,
         default="",
     )
+    parser.add_argument(
+        "--plot-thresholds",
+        type=str,
+        help="Comma-separated depth thresholds for SVG plot tracks (e.g. 1,5,10).",
+        required=False,
+        default="",
+    )
     args = parser.parse_args(argv)
     logger.setLevel(args.verbosity)
     logger.debug("Verbosity set to: %s", args.verbosity)
@@ -195,14 +202,20 @@ def run(argv=None):
             )
         consensus.generate_all_consensus(*args.input, output_folder=args.consensus)
 
+    thresholds = []
+    if args.plot_thresholds:
+        try:
+            thresholds = [int(t.strip()) for t in args.plot_thresholds.split(",")]
+        except ValueError:
+            parser.error("--plot-thresholds must be comma-separated integers (e.g. 1,5,10)")
     if args.plot_svg:
         visualize.plot_all(
-            coverage_maps, max_length, args.plot_svg, start_pos=start_pos
+            coverage_maps, max_length, args.plot_svg, start_pos=start_pos, thresholds=thresholds
         )
     if args.plot_svg_simple:
         # simple mode: all keys treated as samples on a single reference
         visualize.plot_coverage(
-            coverage_maps, max_length, args.plot_svg_simple, start_pos=start_pos
+            coverage_maps, max_length, args.plot_svg_simple, start_pos=start_pos, thresholds=thresholds
         )
 
 

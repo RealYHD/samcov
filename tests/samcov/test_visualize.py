@@ -71,3 +71,29 @@ def test_plot_all_no_data(tmp_path, caplog):
     visualize.plot_all({}, 0, str(out))
     assert not out.exists() or out.read_text() == ""
     assert "No coverage data" in caplog.text
+
+
+def test_plot_coverage_with_thresholds(tmp_path):
+    """Regression: threshold tracks should render without crashing."""
+    cov = {
+        "s1": {0: 5, 1: 0, 2: 3, 3: 8},
+        "s2": {0: 2, 1: 1, 2: 7},
+    }
+    out = tmp_path / "thresholds.svg"
+    visualize.plot_coverage(cov, 4, str(out), thresholds=[1, 5, 10])
+    assert out.exists()
+    text = out.read_text()
+    assert "svg" in text
+
+
+def test_plot_all_with_thresholds(tmp_path):
+    """Regression: threshold tracks on multi-panel plot."""
+    cov = {
+        "run1/ref1": {0: 5, 1: 0, 2: 3},
+        "run2/ref1": {0: 2, 1: 4, 2: 1},
+    }
+    out = tmp_path / "multi_thresh.svg"
+    visualize.plot_all(cov, 3, str(out), thresholds=[2, 6])
+    assert out.exists()
+    text = out.read_text()
+    assert "svg" in text

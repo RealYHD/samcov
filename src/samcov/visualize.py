@@ -10,6 +10,76 @@ import matplotlib.pyplot as plt  # noqa: E402
 
 logger = logging.getLogger(__name__)
 
+# Color-blind-friendly warm palette (red → orange → gold → green → blue)
+_THRESHOLD_COLORS = ["#e41a1c", "#fd8d3c", "#fecc5c", "#41ab5d", "#2c7fb8"]
+
+
+def _threshold_segments(total_y: list[int], threshold: int):
+    """Return list of (start_index, width_in_positions) where total < threshold."""
+    segments: list[tuple[int, int]] = []
+    in_seg = False
+    seg_start = 0
+    for idx, val in enumerate(total_y):
+        if val < threshold and not in_seg:
+            seg_start = idx
+            in_seg = True
+        elif val >= threshold and in_seg:
+            segments.append((seg_start, idx - seg_start))
+            in_seg = False
+    if in_seg:
+        segments.append((seg_start, len(total_y) - seg_start))
+    return segments
+
+
+def _draw_threshold_tracks(
+    ax,
+    total_y: list[int],
+    thresholds: list[int],
+    x: list[int],
+    track_height: float = 0.10,
+    gap: float = 0.03,
+):
+    """Draw thin color-coded threshold tracks below the x-axis.
+
+    Parameters
+    ----------
+    ax
+        Matplotlib Axes instance.
+    total_y
+        Total coverage per position.
+    thresholds
+        Depth thresholds (ascending preferred).
+    x
+        Position labels.
+    track_height
+        Height of each individual track in data units.
+    gap
+        Vertical gap between adjacent tracks.
+    """
+    if not thresholds:
+        return
+
+    y_min, y_max = ax.get_ylim()
+    n = len(thresholds)
+    total_h = n * track_height + (n + 1) * gap
+    ax.set_ylim(bottom=-total_h)
+
+    for i, thresh in enumerate(thresholds):
+        segs = _threshold_segments(total_y, thresh)
+        if not segs:
+            continue
+        color = _THRESHOLD_COLORS[i % len(_THRESHOLD_COLORS)]
+        # bottom of this track
+        y_base = -(i + 1) * (track_height + gap)
+        bar_h = track_height
+        xr = [(x[s], max(1, w)) for s, w in segs]
+        ax.broken_barh(xr, (y_base, bar_h), facecolors=color, edgecolors="none", alpha=0.9, linewidth=0)
+
+    # Phantom handles for legend so the user knows what each color means
+    for i, thresh in enumerate(thresholds):
+        color = _THRESHOLD_COLORS[i % len(_THRESHOLD_COLORS)]
+        ax.plot([], [], color=color, linewidth=3, label=f"<{thresh}×")
+
 
 def plot_coverage(
     coverage_maps: dict[str, dict[int, int]],
@@ -19,6 +89,7 @@ def plot_coverage(
     sample_names: Iterable[str] | None = None,
     chrom_name: str | None = None,
     total_only: bool = False,
+    thresholds: list[int] | None = None,
 ):
     """Render a line-plot SVG of coverage across positions.
 
@@ -38,6 +109,10 @@ def plot_coverage(
         Subtitle / label for the contig being plotted.
     total_only
         When ``True``, suppress per-sample lines and draw only the total.
+    thresholds
+        List of depth thresholds. For each threshold a colored track is drawn
+        below the x-axis showing regions where total coverage is strictly
+        below that value.
     """
     logger.info("Generating coverage plot → %s", output_path)
 
@@ -64,6 +139,10 @@ def plot_coverage(
         total_y.append(total)
     ax.plot(x, total_y, linewidth=1.5, color="black", label="total coverage")
 
+    # threshold tracks below x-axis
+    if thresholds:
+        _draw_threshold_tracks(ax, total_y, thresholds, x)
+
     ax.set_xlabel("Base position")
     ax.set_ylabel("Coverage depth")
     title = "Coverage per base position"
@@ -84,6 +163,7 @@ def plot_all(
     max_length: int,
     output_path: str,
     start_pos: int = 0,
+    thresholds: list[int] | None = None,
 ):
     """Produce a single SVG with one panel per reference.
 
@@ -118,6 +198,10 @@ def plot_all(
             for p in positions
         ]
         ax.plot(x, total_y, linewidth=1.5, color="black", label="total coverage")
+
+        if thresholds:
+            _draw_threshold_tracks(ax, total_y, thresholds, x)
+
         ax.set_title(ref_name)
         ax.set_xlabel("Base position")
         ax.set_ylabel("Coverage depth")
