@@ -54,8 +54,8 @@ def _draw_threshold_tracks(
     mean_y: list[float],
     thresholds: list[int],
     x: list[int],
-    track_height: float = 0.25,
-    gap: float = 0.05,
+    track_height: float = 6.0,
+    gap: float = 1.5,
 ):
     """Draw thin color-coded threshold tracks on a dedicated axes.
 
