@@ -116,23 +116,23 @@ def run(argv=None):
         default="",
     )
     parser.add_argument(
-        "--plot-svg",
+        "--plot-strips",
         type=str,
-        help="Path to output a coverage line-plot SVG (one panel per reference).",
+        help="Path to output a multi-panel threshold strip plot SVG (one panel per reference).",
         required=False,
         default="",
     )
     parser.add_argument(
-        "--plot-svg-simple",
+        "--plot-strip",
         type=str,
-        help="Path to output a single-panel SVG when all inputs target one reference.",
+        help="Path to output a single-panel threshold strip plot SVG.",
         required=False,
         default="",
     )
     parser.add_argument(
         "--plot-thresholds",
         type=str,
-        help="Comma-separated depth thresholds for SVG plot tracks (e.g. 1,5,10).",
+        help="Comma-separated depth thresholds for SVG plot strips (e.g. 1,5,10). Required when --plot-strips or --plot-strip is used.",
         required=False,
         default="",
     )
@@ -203,18 +203,20 @@ def run(argv=None):
         consensus.generate_all_consensus(*args.input, output_folder=args.consensus)
 
     thresholds = []
-    if args.plot_thresholds:
+    if args.plot_strips or args.plot_strip:
+        if not args.plot_thresholds:
+            parser.error("--plot-thresholds is required when using --plot-strips or --plot-strip")
         try:
             thresholds = [int(t.strip()) for t in args.plot_thresholds.split(",")]
         except ValueError:
             parser.error("--plot-thresholds must be comma-separated integers (e.g. 1,5,10)")
-    if args.plot_svg:
+    if args.plot_strips:
         visualize.plot_all(
-            coverage_maps, max_length, args.plot_svg, start_pos=start_pos, thresholds=thresholds
+            coverage_maps, max_length, args.plot_strips, start_pos=start_pos, thresholds=thresholds
         )
-    if args.plot_svg_simple:
+    if args.plot_strip:
         visualize.plot_coverage(
-            coverage_maps, max_length, args.plot_svg_simple, start_pos=start_pos, thresholds=thresholds
+            coverage_maps, max_length, args.plot_strip, start_pos=start_pos, thresholds=thresholds
         )
 
 

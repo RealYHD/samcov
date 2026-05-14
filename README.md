@@ -65,11 +65,11 @@ samcov *.bam --shared-low-coverage-bed shared_gaps.bed --low-coverage 5
 # Export per-sample low-coverage regions as BED
 samcov *.bam --low-coverage-bed per_sample_gaps.bed --low-coverage 5
 
-# Generate a vector line plot (one panel per reference)
-samcov *.bam --plot-svg coverage_plot.svg
+# Generate a threshold strip plot (one panel per reference)
+samcov *.bam --plot-strips coverage_plot.svg --plot-thresholds 1,5,10
 
-# Generate a simple single-panel plot (single reference)
-samcov *.bam --plot-svg-simple coverage_plot.svg
+# Generate a single-panel threshold strip plot (single reference)
+samcov *.bam --plot-strip coverage_plot.svg --plot-thresholds 1,5,10
 ```
 
 ## CLI reference
@@ -82,7 +82,7 @@ usage: samcov [-h] [--csv CSV] [--centers-csv CENTERS_CSV]
               [--shared-low-coverage-csv SHARED_LOW_COVERAGE_CSV]
               [--shared-low-coverage-bed SHARED_LOW_COVERAGE_BED]
               [--low-coverage-bed LOW_COVERAGE_BED] [--consensus CONSENSUS]
-              [--plot-svg PLOT_SVG] [--plot-svg-simple PLOT_SVG_SIMPLE]
+              [--plot-strips PLOT_STRIPS] [--plot-strip PLOT_STRIP]
               I [I ...]
 ```
 
@@ -99,8 +99,8 @@ usage: samcov [-h] [--csv CSV] [--centers-csv CENTERS_CSV]
 | `--sparse` | Omit rows where **all** samples have zero coverage |
 | `--verbosity LEVEL` | DEBUG, INFO, WARNING, ERROR |
 | `--consensus DIR` | Generate FASTA consensus via `samtools consensus` |
-| `--plot-svg PATH` | Multi-panel SVG threshold strip plot (one panel per reference) |
-| `--plot-svg-simple PATH` | Single-panel SVG threshold strip plot (single reference) |
+| `--plot-strips PATH` | Multi-panel SVG threshold strip plot (one panel per reference) |
+| `--plot-strip PATH` | Single-panel SVG threshold strip plot (single reference) |
 | `--plot-thresholds 1,5,10` | Color-coded threshold strips showing mean coverage below each value |
 
 ### Threshold strip plots
@@ -109,10 +109,10 @@ Generate compact strip-style SVGs showing where mean coverage falls below config
 
 ```bash
 # Multi-panel strip — one panel per reference sequence
-samcov *.bam --plot-svg coverage.svg --plot-thresholds 1,5,10
+samcov *.bam --plot-strips coverage.svg --plot-thresholds 1,5,10
 
 # Single-panel strip — all thresholds on one axis
-samcov *.bam --plot-svg-simple coverage.svg --plot-thresholds 1,5,10
+samcov *.bam --plot-strip coverage.svg --plot-thresholds 1,5,10
 ```
 
 - **X-axis**: base position (respects `--start-at`)
