@@ -11,7 +11,7 @@ Extract per-base coverage from SAM/BAM alignment files, compute aggregate statis
 - **Statistical summaries** — mean, median, and mode coverage per position across samples
 - **Low-coverage region detection** — find contiguous gaps below a configurable depth threshold
 - **Consensus generation** — produce FASTA consensus sequences with `samtools consensus`
-- **Vector line plots** — export coverage trends as SVG (per-sample traces + total coverage line)
+- **Vector line plots** — export coverage trends as SVG (per-sample traces + optional total coverage line + color-coded threshold tracks)
 - **CSV export** — sparse or dense output for downstream analysis in R, pandas, Excel, etc.
 
 ## System Requirements
@@ -101,6 +101,8 @@ usage: samcov [-h] [--csv CSV] [--centers-csv CENTERS_CSV]
 | `--consensus DIR` | Generate FASTA consensus via `samtools consensus` |
 | `--plot-svg PATH` | Multi-panel SVG line plot (one panel per reference) |
 | `--plot-svg-simple PATH` | Single-panel SVG line plot (single reference) |
+| `--plot-thresholds 1,5,10` | Color-coded threshold tracks below the x-axis |
+| `--no-total` | Suppress the black total-coverage line in SVG plots |
 
 ### Coverage line plots
 
@@ -112,12 +114,21 @@ samcov *.bam --plot-svg coverage.svg
 
 # Single-panel plot — all samples on one axis
 samcov *.bam --plot-svg-simple coverage.svg
+
+# Add color-coded threshold tracks (shows where total coverage < 1, 5, or 10)
+samcov *.bam --plot-svg coverage.svg --plot-thresholds 1,5,10
+
+# Hide the total-coverage line, keep only per-sample traces
+samcov *.bam --plot-svg-simple coverage.svg --no-total
 ```
 
 - **X-axis**: base position (respects `--start-at`)
 - **Y-axis**: coverage depth
 - Each sample gets a translucent trace
-- A thick black line shows **total coverage** summed across all samples
+- A thick black line shows **total coverage** summed across all samples (unless `--no-total` is used)
+- **Threshold tracks**: thin colored strips below the x-axis showing where total coverage falls below each threshold value
+  - Red → orange → gold → green → blue (color-blind friendly)
+  - Legend labels show `<1×`, `<5×`, etc.
 
 ## Output formats
 
