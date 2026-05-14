@@ -56,19 +56,6 @@ def test_cli_plot_svg_simple(mock_plot, mock_count, tmp_path, capsys):
 
 @patch("samcov.cli.count.count_all_sam_positions")
 @patch("samcov.cli.visualize.plot_all")
-def test_cli_plot_svg_no_total(mock_plot, mock_count, tmp_path):
-    p = tmp_path / "fake.bam"
-    p.write_text("")
-    mock_count.return_value = ({"fake.bam/ref": {0: 5}}, 1)
-    out = tmp_path / "plot.svg"
-    run([str(p), "--plot-svg", str(out), "--no-total"])
-    mock_plot.assert_called_once()
-    call_kwargs = mock_plot.call_args.kwargs
-    assert call_kwargs.get("show_total") is False
-
-
-@patch("samcov.cli.count.count_all_sam_positions")
-@patch("samcov.cli.visualize.plot_all")
 def test_cli_plot_svg(mock_plot, mock_count, tmp_path, capsys):
     p = tmp_path / "fake.bam"
     p.write_text("")

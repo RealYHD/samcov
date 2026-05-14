@@ -11,7 +11,7 @@ Extract per-base coverage from SAM/BAM alignment files, compute aggregate statis
 - **Statistical summaries** — mean, median, and mode coverage per position across samples
 - **Low-coverage region detection** — find contiguous gaps below a configurable depth threshold
 - **Consensus generation** — produce FASTA consensus sequences with `samtools consensus`
-- **Vector line plots** — export coverage trends as SVG (per-sample traces + optional total coverage line + color-coded threshold tracks)
+- **Threshold strip plots** — export color-coded threshold regions as SVG strips (mean coverage vs. configurable depth thresholds)
 - **CSV export** — sparse or dense output for downstream analysis in R, pandas, Excel, etc.
 
 ## System Requirements
@@ -99,36 +99,28 @@ usage: samcov [-h] [--csv CSV] [--centers-csv CENTERS_CSV]
 | `--sparse` | Omit rows where **all** samples have zero coverage |
 | `--verbosity LEVEL` | DEBUG, INFO, WARNING, ERROR |
 | `--consensus DIR` | Generate FASTA consensus via `samtools consensus` |
-| `--plot-svg PATH` | Multi-panel SVG line plot (one panel per reference) |
-| `--plot-svg-simple PATH` | Single-panel SVG line plot (single reference) |
-| `--plot-thresholds 1,5,10` | Color-coded threshold tracks below the x-axis |
-| `--no-total` | Suppress the mean±SD summary line in SVG plots |
+| `--plot-svg PATH` | Multi-panel SVG threshold strip plot (one panel per reference) |
+| `--plot-svg-simple PATH` | Single-panel SVG threshold strip plot (single reference) |
+| `--plot-thresholds 1,5,10` | Color-coded threshold strips showing mean coverage below each value |
 
-### Coverage line plots
+### Threshold strip plots
 
-Generate publication-quality vector plots directly from the CLI:
+Generate compact strip-style SVGs showing where mean coverage falls below configurable thresholds:
 
 ```bash
-# Multi-panel plot — one subplot per reference sequence
-samcov *.bam --plot-svg coverage.svg
-
-# Single-panel plot — all samples on one axis
-samcov *.bam --plot-svg-simple coverage.svg
-
-# Add color-coded threshold tracks (shows where mean coverage < 1, 5, or 10)
+# Multi-panel strip — one panel per reference sequence
 samcov *.bam --plot-svg coverage.svg --plot-thresholds 1,5,10
 
-# Hide the summary line, keep only per-sample traces
-samcov *.bam --plot-svg-simple coverage.svg --no-total
+# Single-panel strip — all thresholds on one axis
+samcov *.bam --plot-svg-simple coverage.svg --plot-thresholds 1,5,10
 ```
 
 - **X-axis**: base position (respects `--start-at`)
-- **Y-axis**: coverage depth
-- Each sample gets a translucent trace
-- A black line shows **mean coverage** across all samples (with a translucent ±SD band)
-- **Threshold tracks**: thin colored strips below the x-axis showing where mean coverage falls below each threshold value
-  - Red → orange → gold → green → blue (color-blind friendly)
-  - Legend labels show `<1×`, `<5×`, etc.
+- Each threshold renders as a horizontal colored strip
+- Colored segments appear wherever **mean coverage** is strictly below that threshold
+- Tracks are stacked with small gaps for readability
+- Color-blind-friendly palette: red → orange → gold → green → blue
+- Legend labels show `<1×`, `<5×`, etc.
 
 ## Output formats
 

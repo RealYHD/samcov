@@ -3,7 +3,7 @@ from samcov import visualize
 
 
 def test_plot_coverage_basic(tmp_path):
-    """Smoke-test a single-panel SVG export."""
+    """Smoke-test a single-panel strip SVG export."""
     cov = {
         "sample_A": {0: 5, 1: 10, 2: 3},
         "sample_B": {0: 2, 2: 7},
@@ -17,7 +17,7 @@ def test_plot_coverage_basic(tmp_path):
 
 
 def test_plot_all_basic(tmp_path):
-    """Smoke-test a multi-panel SVG export."""
+    """Smoke-test a multi-panel strip SVG export."""
     cov = {
         "run1/ref1": {0: 5, 1: 0, 2: 3},
         "run2/ref1": {0: 2, 1: 4, 2: 1},
@@ -31,19 +31,6 @@ def test_plot_all_basic(tmp_path):
     assert "svg" in text
 
 
-def test_plot_coverage_total_only(tmp_path):
-    """Ensure total-only mode suppresses per-sample traces but still writes SVG."""
-    cov = {
-        "sample_A": {0: 5, 1: 10},
-        "sample_B": {0: 2, 1: 3},
-    }
-    out = tmp_path / "total_only.svg"
-    visualize.plot_coverage(cov, 2, str(out), total_only=True)
-    assert out.exists()
-    text = out.read_text()
-    assert "svg" in text
-
-
 def test_plot_coverage_with_chrom_name(tmp_path):
     """Regression: chrom name should appear in the SVG title."""
     cov = {"s1": {0: 1}}
@@ -51,18 +38,6 @@ def test_plot_coverage_with_chrom_name(tmp_path):
     visualize.plot_coverage(cov, 1, str(out), chrom_name="chr1")
     text = out.read_text()
     assert "chr1" in text
-
-
-def test_plot_coverage_sample_filter(tmp_path):
-    """Regression: sample_names filtering should only draw requested traces."""
-    cov = {
-        "s1": {0: 5, 1: 0},
-        "s2": {0: 2, 1: 3},
-        "s3": {0: 1, 1: 1},
-    }
-    out = tmp_path / "filtered.svg"
-    visualize.plot_coverage(cov, 2, str(out), sample_names=["s1", "s3"])
-    assert out.exists()
 
 
 def test_plot_all_no_data(tmp_path, caplog):
@@ -94,32 +69,6 @@ def test_plot_all_with_thresholds(tmp_path):
     }
     out = tmp_path / "multi_thresh.svg"
     visualize.plot_all(cov, 3, str(out), thresholds=[2, 6])
-    assert out.exists()
-    text = out.read_text()
-    assert "svg" in text
-
-
-def test_plot_coverage_no_total_line(tmp_path):
-    """Regression: show_total=False should suppress the black total line."""
-    cov = {
-        "s1": {0: 5, 1: 10},
-        "s2": {0: 2, 1: 3},
-    }
-    out = tmp_path / "no_total.svg"
-    visualize.plot_coverage(cov, 2, str(out), show_total=False)
-    assert out.exists()
-    text = out.read_text()
-    assert "svg" in text
-
-
-def test_plot_all_no_total_line(tmp_path):
-    """Regression: show_total=False on multi-panel plot."""
-    cov = {
-        "run1/ref1": {0: 5, 1: 0},
-        "run2/ref1": {0: 2, 1: 4},
-    }
-    out = tmp_path / "multi_no_total.svg"
-    visualize.plot_all(cov, 2, str(out), show_total=False)
     assert out.exists()
     text = out.read_text()
     assert "svg" in text

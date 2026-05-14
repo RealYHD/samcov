@@ -1,6 +1,7 @@
 """Coverage plotting utilities.
 
-Generates vector line plots (SVG) from per-position coverage data.
+Generates strip-style SVG plots showing threshold regions from per-position
+coverage data.
 """
 import logging
 from typing import Iterable
@@ -53,10 +54,10 @@ def _draw_threshold_tracks(
     mean_y: list[float],
     thresholds: list[int],
     x: list[int],
-    track_height_ratio: float = 0.03,
-    gap_ratio: float = 0.008,
+    track_height: float = 0.25,
+    gap: float = 0.05,
 ):
-    """Draw thin color-coded threshold tracks below the x-axis.
+    """Draw thin color-coded threshold tracks on a dedicated axes.
 
     Parameters
     ----------
@@ -68,23 +69,18 @@ def _draw_threshold_tracks(
         Depth thresholds (ascending preferred).
     x
         Position labels.
-    track_height_ratio
-        Height of each track as a fraction of the *data* y-range.
-    gap_ratio
-        Gap between adjacent tracks as a fraction of the y-range.
+    track_height
+        Height of each track in data units.
+    gap
+        Vertical gap between adjacent tracks.
     """
     if not thresholds:
         return
 
-    y_min, y_max = ax.get_ylim()
-    y_range = max(y_max - y_min, 1.0)
-
-    track_height = max(y_range * track_height_ratio, 0.5)
-    gap = max(y_range * gap_ratio, 0.15)
-
     n = len(thresholds)
     total_h = n * track_height + (n + 1) * gap
-    ax.set_ylim(bottom=-total_h)
+    ax.set_ylim(-total_h, 0)
+    ax.set_xlim(min(x), max(x))
 
     for i, thresh in enumerate(thresholds):
         segs = _threshold_segments(mean_y, thresh)
@@ -97,9 +93,22 @@ def _draw_threshold_tracks(
         ax.broken_barh(xr, (y_base, bar_h), facecolors=color, edgecolors="none", alpha=0.9, linewidth=0)
 
     # Phantom handles for legend
+    handles = []
     for i, thresh in enumerate(thresholds):
         color = _THRESHOLD_COLORS[i % len(_THRESHOLD_COLORS)]
-        ax.plot([], [], color=color, linewidth=3, label=f"<{thresh}×")
+        handle, = ax.plot([], [], color=color, linewidth=3, label=f"<{thresh}×")
+        handles.append(handle)
+    if handles:
+        ax.legend(loc="upper right", fontsize="small")
+
+
+def _style_strip_axes(ax):
+    """Remove y-axis and spines; keep only x-axis and title area."""
+    ax.spines["top"].set_visible(False)
+    ax.spines["right"].set_visible(False)
+    ax.spines["left"].set_visible(False)
+    ax.set_yticks([])
+    ax.set_ylabel("")
 
 
 def plot_coverage(
@@ -107,13 +116,10 @@ def plot_coverage(
     max_length: int,
     output_path: str,
     start_pos: int = 0,
-    sample_names: Iterable[str] | None = None,
     chrom_name: str | None = None,
-    total_only: bool = False,
     thresholds: list[int] | None = None,
-    show_total: bool = True,
 ):
-    """Render a line-plot SVG of coverage across positions.
+    """Render a strip-style SVG showing threshold regions only.
 
     Parameters
     ----------
@@ -125,57 +131,29 @@ def plot_coverage(
         Where to save the SVG.
     start_pos
         Offset added to each x-axis label.
-    sample_names
-        If given, only these sample traces are drawn.
     chrom_name
         Subtitle / label for the contig being plotted.
-    total_only
-        When ``True``, suppress per-sample lines and draw only the mean line.
     thresholds
         List of depth thresholds. For each threshold a colored track is drawn
-        below the x-axis showing regions where mean coverage is strictly
-        below that value.
-    show_total
-        When ``False``, suppress the mean±SD summary line.
+        showing regions where mean coverage is strictly below that value.
     """
-    logger.info("Generating coverage plot → %s", output_path)
-
-    names = list(coverage_maps.keys())
-    if sample_names is not None:
-        names = [n for n in sample_names if n in coverage_maps]
+    logger.info("Generating coverage strip plot → %s", output_path)
 
     positions = list(range(max_length))
-    x = np.array([p + start_pos for p in positions])
+    x = [p + start_pos for p in positions]
+    mean_y, _ = _mean_std_at_positions(coverage_maps, positions)
 
-    fig, ax = plt.subplots(figsize=(12, 6))
+    fig, ax = plt.subplots(figsize=(12, 1.5 + 0.4 * (len(thresholds) if thresholds else 0)))
 
-    # per-sample traces
-    if not total_only:
-        for name in names:
-            cov_map = coverage_maps[name]
-            y = [cov_map.get(p, 0) for p in positions]
-            ax.plot(x, y, linewidth=0.8, alpha=0.7, label=name)
-
-    # mean ± SD line
-    mean_y, std_y = _mean_std_at_positions(coverage_maps, positions)
-    if show_total:
-        ax.plot(x, mean_y, linewidth=1.5, color="black", label="mean coverage")
-        upper = np.array(mean_y) + np.array(std_y)
-        lower = np.maximum(np.array(mean_y) - np.array(std_y), 0)
-        ax.fill_between(x, lower, upper, color="black", alpha=0.12)
-
-    # threshold tracks below x-axis
     if thresholds:
         _draw_threshold_tracks(ax, mean_y, thresholds, x)
 
     ax.set_xlabel("Base position")
-    ax.set_ylabel("Coverage depth")
-    title = "Coverage per base position"
+    title = "Coverage threshold regions"
     if chrom_name:
         title += f" — {chrom_name}"
     ax.set_title(title)
-    ax.legend(loc="upper right", fontsize="small")
-    ax.margins(x=0.01)
+    _style_strip_axes(ax)
 
     fig.tight_layout()
     fig.savefig(output_path, format="svg")
@@ -189,9 +167,8 @@ def plot_all(
     output_path: str,
     start_pos: int = 0,
     thresholds: list[int] | None = None,
-    show_total: bool = True,
 ):
-    """Produce a single SVG with one panel per reference.
+    """Produce a single SVG with one strip panel per reference.
 
     ``coverage_maps`` keys are expected to be ``sample/reference``.
     """
@@ -208,32 +185,22 @@ def plot_all(
         logger.warning("No coverage data to plot.")
         return
 
-    fig, axes = plt.subplots(n, 1, figsize=(12, 4 * n), sharex=False)
+    strip_h = 1.5 + 0.4 * (len(thresholds) if thresholds else 0)
+    fig, axes = plt.subplots(n, 1, figsize=(12, strip_h * n), sharex=False)
     if n == 1:
         axes = [axes]
 
     for ax, (ref_name, sample_maps) in zip(axes, refs.items()):
         positions = list(range(max_length))
-        x = np.array([p + start_pos for p in positions])
-        for sample_name, cov_map in sample_maps.items():
-            y = [cov_map.get(p, 0) for p in positions]
-            ax.plot(x, y, linewidth=0.8, alpha=0.7, label=sample_name)
-
-        mean_y, std_y = _mean_std_at_positions(sample_maps, positions)
-        if show_total:
-            ax.plot(x, mean_y, linewidth=1.5, color="black", label="mean coverage")
-            upper = np.array(mean_y) + np.array(std_y)
-            lower = np.maximum(np.array(mean_y) - np.array(std_y), 0)
-            ax.fill_between(x, lower, upper, color="black", alpha=0.12)
+        x = [p + start_pos for p in positions]
+        mean_y, _ = _mean_std_at_positions(sample_maps, positions)
 
         if thresholds:
             _draw_threshold_tracks(ax, mean_y, thresholds, x)
 
         ax.set_title(ref_name)
         ax.set_xlabel("Base position")
-        ax.set_ylabel("Coverage depth")
-        ax.legend(loc="upper right", fontsize="small")
-        ax.margins(x=0.01)
+        _style_strip_axes(ax)
 
     fig.tight_layout()
     fig.savefig(output_path, format="svg")

@@ -136,13 +136,6 @@ def run(argv=None):
         required=False,
         default="",
     )
-    parser.add_argument(
-        "--no-total",
-        action="store_true",
-        help="Suppress the mean±SD summary line in SVG plots.",
-        required=False,
-        default=False,
-    )
     args = parser.parse_args(argv)
     logger.setLevel(args.verbosity)
     logger.debug("Verbosity set to: %s", args.verbosity)
@@ -217,12 +210,11 @@ def run(argv=None):
             parser.error("--plot-thresholds must be comma-separated integers (e.g. 1,5,10)")
     if args.plot_svg:
         visualize.plot_all(
-            coverage_maps, max_length, args.plot_svg, start_pos=start_pos, thresholds=thresholds, show_total=not args.no_total
+            coverage_maps, max_length, args.plot_svg, start_pos=start_pos, thresholds=thresholds
         )
     if args.plot_svg_simple:
-        # simple mode: all keys treated as samples on a single reference
         visualize.plot_coverage(
-            coverage_maps, max_length, args.plot_svg_simple, start_pos=start_pos, thresholds=thresholds, show_total=not args.no_total
+            coverage_maps, max_length, args.plot_svg_simple, start_pos=start_pos, thresholds=thresholds
         )
 
 
