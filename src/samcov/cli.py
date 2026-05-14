@@ -139,7 +139,7 @@ def run(argv=None):
     parser.add_argument(
         "--no-total",
         action="store_true",
-        help="Suppress the total-coverage black line in SVG plots.",
+        help="Suppress the mean±SD summary line in SVG plots.",
         required=False,
         default=False,
     )

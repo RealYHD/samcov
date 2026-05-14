@@ -102,7 +102,7 @@ usage: samcov [-h] [--csv CSV] [--centers-csv CENTERS_CSV]
 | `--plot-svg PATH` | Multi-panel SVG line plot (one panel per reference) |
 | `--plot-svg-simple PATH` | Single-panel SVG line plot (single reference) |
 | `--plot-thresholds 1,5,10` | Color-coded threshold tracks below the x-axis |
-| `--no-total` | Suppress the black total-coverage line in SVG plots |
+| `--no-total` | Suppress the mean±SD summary line in SVG plots |
 
 ### Coverage line plots
 
@@ -115,18 +115,18 @@ samcov *.bam --plot-svg coverage.svg
 # Single-panel plot — all samples on one axis
 samcov *.bam --plot-svg-simple coverage.svg
 
-# Add color-coded threshold tracks (shows where total coverage < 1, 5, or 10)
+# Add color-coded threshold tracks (shows where mean coverage < 1, 5, or 10)
 samcov *.bam --plot-svg coverage.svg --plot-thresholds 1,5,10
 
-# Hide the total-coverage line, keep only per-sample traces
+# Hide the summary line, keep only per-sample traces
 samcov *.bam --plot-svg-simple coverage.svg --no-total
 ```
 
 - **X-axis**: base position (respects `--start-at`)
 - **Y-axis**: coverage depth
 - Each sample gets a translucent trace
-- A thick black line shows **total coverage** summed across all samples (unless `--no-total` is used)
-- **Threshold tracks**: thin colored strips below the x-axis showing where total coverage falls below each threshold value
+- A black line shows **mean coverage** across all samples (with a translucent ±SD band)
+- **Threshold tracks**: thin colored strips below the x-axis showing where mean coverage falls below each threshold value
   - Red → orange → gold → green → blue (color-blind friendly)
   - Legend labels show `<1×`, `<5×`, etc.
 
