@@ -130,9 +130,16 @@ def run(argv=None):
         default="",
     )
     parser.add_argument(
-        "--plot-thresholds",
+        "--below",
         type=str,
-        help="Comma-separated depth thresholds for SVG plot strips (e.g. 1,5,10). Required when --plot-strips or --plot-strip is used.",
+        help="Comma-separated depth thresholds for below-threshold strips (e.g. 1,5,10). Colored regions appear where mean coverage < threshold.",
+        required=False,
+        default="",
+    )
+    parser.add_argument(
+        "--above",
+        type=str,
+        help="Comma-separated depth thresholds for above-threshold strips (e.g. 50,100). Colored regions appear where mean coverage > threshold.",
         required=False,
         default="",
     )
@@ -202,21 +209,28 @@ def run(argv=None):
             )
         consensus.generate_all_consensus(*args.input, output_folder=args.consensus)
 
-    thresholds = []
+    below = []
+    above = []
     if args.plot_strips or args.plot_strip:
-        if not args.plot_thresholds:
-            parser.error("--plot-thresholds is required when using --plot-strips or --plot-strip")
+        if not args.below and not args.above:
+            parser.error("At least one of --below or --above is required when using --plot-strips or --plot-strip")
+    if args.below:
         try:
-            thresholds = [int(t.strip()) for t in args.plot_thresholds.split(",")]
+            below = [int(t.strip()) for t in args.below.split(",")]
         except ValueError:
-            parser.error("--plot-thresholds must be comma-separated integers (e.g. 1,5,10)")
+            parser.error("--below must be comma-separated integers (e.g. 1,5,10)")
+    if args.above:
+        try:
+            above = [int(t.strip()) for t in args.above.split(",")]
+        except ValueError:
+            parser.error("--above must be comma-separated integers (e.g. 50,100)")
     if args.plot_strips:
         visualize.plot_all(
-            coverage_maps, max_length, args.plot_strips, start_pos=start_pos, thresholds=thresholds
+            coverage_maps, max_length, args.plot_strips, start_pos=start_pos, below=below, above=above
         )
     if args.plot_strip:
         visualize.plot_coverage(
-            coverage_maps, max_length, args.plot_strip, start_pos=start_pos, thresholds=thresholds
+            coverage_maps, max_length, args.plot_strip, start_pos=start_pos, below=below, above=above
         )
 
 

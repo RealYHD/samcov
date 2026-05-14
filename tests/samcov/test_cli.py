@@ -32,33 +32,49 @@ def test_cli_csv(mock_export, mock_count, tmp_path, capsys):
 
 @patch("samcov.cli.count.count_all_sam_positions")
 @patch("samcov.cli.visualize.plot_all")
-def test_cli_plot_strips_with_thresholds(mock_plot, mock_count, tmp_path):
+def test_cli_plot_strips_with_below(mock_plot, mock_count, tmp_path):
     p = tmp_path / "fake.bam"
     p.write_text("")
     mock_count.return_value = ({"fake.bam/ref": {0: 5, 1: 0, 2: 3}}, 3)
     out = tmp_path / "plot.svg"
-    run([str(p), "--plot-strips", str(out), "--plot-thresholds", "1,5"])
+    run([str(p), "--plot-strips", str(out), "--below", "1,5"])
     mock_plot.assert_called_once()
     call_kwargs = mock_plot.call_args.kwargs
-    assert call_kwargs.get("thresholds") == [1, 5]
-
-
-@patch("samcov.cli.count.count_all_sam_positions")
-@patch("samcov.cli.visualize.plot_coverage")
-def test_cli_plot_strip_with_thresholds(mock_plot, mock_count, tmp_path):
-    p = tmp_path / "fake.bam"
-    p.write_text("")
-    mock_count.return_value = ({"fake.bam/ref": {0: 5, 1: 0, 2: 3}}, 3)
-    out = tmp_path / "plot.svg"
-    run([str(p), "--plot-strip", str(out), "--plot-thresholds", "1,5"])
-    mock_plot.assert_called_once()
-    call_kwargs = mock_plot.call_args.kwargs
-    assert call_kwargs.get("thresholds") == [1, 5]
+    assert call_kwargs.get("below") == [1, 5]
+    assert call_kwargs.get("above") == []
 
 
 @patch("samcov.cli.count.count_all_sam_positions")
 @patch("samcov.cli.visualize.plot_all")
-def test_cli_plot_strips_requires_thresholds(mock_plot, mock_count, tmp_path):
+def test_cli_plot_strips_with_above(mock_plot, mock_count, tmp_path):
+    p = tmp_path / "fake.bam"
+    p.write_text("")
+    mock_count.return_value = ({"fake.bam/ref": {0: 5, 1: 0, 2: 3}}, 3)
+    out = tmp_path / "plot.svg"
+    run([str(p), "--plot-strips", str(out), "--above", "50,100"])
+    mock_plot.assert_called_once()
+    call_kwargs = mock_plot.call_args.kwargs
+    assert call_kwargs.get("above") == [50, 100]
+    assert call_kwargs.get("below") == []
+
+
+@patch("samcov.cli.count.count_all_sam_positions")
+@patch("samcov.cli.visualize.plot_coverage")
+def test_cli_plot_strip_with_both(mock_plot, mock_count, tmp_path):
+    p = tmp_path / "fake.bam"
+    p.write_text("")
+    mock_count.return_value = ({"fake.bam/ref": {0: 5, 1: 0, 2: 3}}, 3)
+    out = tmp_path / "plot.svg"
+    run([str(p), "--plot-strip", str(out), "--below", "1,5", "--above", "50"])
+    mock_plot.assert_called_once()
+    call_kwargs = mock_plot.call_args.kwargs
+    assert call_kwargs.get("below") == [1, 5]
+    assert call_kwargs.get("above") == [50]
+
+
+@patch("samcov.cli.count.count_all_sam_positions")
+@patch("samcov.cli.visualize.plot_all")
+def test_cli_plot_strips_requires_below_or_above(mock_plot, mock_count, tmp_path):
     p = tmp_path / "fake.bam"
     p.write_text("")
     mock_count.return_value = ({"fake.bam/ref": {0: 5}}, 1)
@@ -69,7 +85,7 @@ def test_cli_plot_strips_requires_thresholds(mock_plot, mock_count, tmp_path):
 
 @patch("samcov.cli.count.count_all_sam_positions")
 @patch("samcov.cli.visualize.plot_coverage")
-def test_cli_plot_strip_requires_thresholds(mock_plot, mock_count, tmp_path):
+def test_cli_plot_strip_requires_below_or_above(mock_plot, mock_count, tmp_path):
     p = tmp_path / "fake.bam"
     p.write_text("")
     mock_count.return_value = ({"fake.bam/ref": {0: 5}}, 1)

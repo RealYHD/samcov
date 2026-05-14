@@ -32,7 +32,7 @@ def _mean_std_at_positions(
     return mean_y, std_y
 
 
-def _threshold_segments(mean_y: list[float], threshold: int):
+def _below_segments(mean_y: list[float], threshold: int):
     """Return list of (start_index, width_in_positions) where mean < threshold."""
     segments: list[tuple[int, int]] = []
     in_seg = False
@@ -49,15 +49,33 @@ def _threshold_segments(mean_y: list[float], threshold: int):
     return segments
 
 
-def _draw_threshold_tracks(
+def _above_segments(mean_y: list[float], threshold: int):
+    """Return list of (start_index, width_in_positions) where mean > threshold."""
+    segments: list[tuple[int, int]] = []
+    in_seg = False
+    seg_start = 0
+    for idx, val in enumerate(mean_y):
+        if val > threshold and not in_seg:
+            seg_start = idx
+            in_seg = True
+        elif val <= threshold and in_seg:
+            segments.append((seg_start, idx - seg_start))
+            in_seg = False
+    if in_seg:
+        segments.append((seg_start, len(mean_y) - seg_start))
+    return segments
+
+
+def _draw_tracks(
     ax,
     mean_y: list[float],
-    thresholds: list[int],
-    x: list[int],
+    below: list[int] | None = None,
+    above: list[int] | None = None,
+    x: list[int] | None = None,
     track_height: float = 6.0,
     gap: float = 1.5,
 ):
-    """Draw thin color-coded threshold tracks on a dedicated axes.
+    """Draw color-coded threshold tracks: below in negative y, above in positive y.
 
     Parameters
     ----------
@@ -65,38 +83,61 @@ def _draw_threshold_tracks(
         Matplotlib Axes instance.
     mean_y
         Mean coverage per position.
-    thresholds
-        Depth thresholds (ascending preferred).
+    below
+        Depth thresholds for below-threshold tracks (ascending preferred).
+    above
+        Depth thresholds for above-threshold tracks (ascending preferred).
     x
         Position labels.
     track_height
         Height of each track in data units.
     gap
-        Vertical gap between adjacent tracks.
+        Vertical gap between adjacent tracks / axis.
     """
-    if not thresholds:
+    below = below or []
+    above = above or []
+    if not below and not above:
         return
 
-    n = len(thresholds)
-    total_h = n * track_height + (n + 1) * gap
-    ax.set_ylim(-total_h, 0)
-    ax.set_xlim(min(x), max(x))
+    n_below = len(below)
+    n_above = len(above)
+    total_below_h = n_below * track_height + (n_below + 1) * gap if n_below else 0
+    total_above_h = n_above * track_height + (n_above + 1) * gap if n_above else 0
+    ax.set_ylim(-total_below_h, total_above_h)
+    if x:
+        ax.set_xlim(min(x), max(x))
 
-    for i, thresh in enumerate(thresholds):
-        segs = _threshold_segments(mean_y, thresh)
+    # Below tracks (negative y, closest to axis first)
+    for i, thresh in enumerate(below):
+        segs = _below_segments(mean_y, thresh)
         if not segs:
             continue
         color = _THRESHOLD_COLORS[i % len(_THRESHOLD_COLORS)]
         y_base = -(i + 1) * (track_height + gap)
         bar_h = track_height
-        xr = [(x[s], max(1, w)) for s, w in segs]
+        xr = [(x[s], max(1, w)) for s, w in segs] if x else segs
+        ax.broken_barh(xr, (y_base, bar_h), facecolors=color, edgecolors="none", alpha=0.9, linewidth=0)
+
+    # Above tracks (positive y, closest to axis first)
+    for i, thresh in enumerate(above):
+        segs = _above_segments(mean_y, thresh)
+        if not segs:
+            continue
+        color = _THRESHOLD_COLORS[i % len(_THRESHOLD_COLORS)]
+        y_base = gap + i * (track_height + gap)
+        bar_h = track_height
+        xr = [(x[s], max(1, w)) for s, w in segs] if x else segs
         ax.broken_barh(xr, (y_base, bar_h), facecolors=color, edgecolors="none", alpha=0.9, linewidth=0)
 
     # Phantom handles for legend
     handles = []
-    for i, thresh in enumerate(thresholds):
+    for i, thresh in enumerate(below):
         color = _THRESHOLD_COLORS[i % len(_THRESHOLD_COLORS)]
         handle, = ax.plot([], [], color=color, linewidth=3, label=f"<{thresh}×")
+        handles.append(handle)
+    for i, thresh in enumerate(above):
+        color = _THRESHOLD_COLORS[i % len(_THRESHOLD_COLORS)]
+        handle, = ax.plot([], [], color=color, linewidth=3, label=f">{thresh}×")
         handles.append(handle)
     if handles:
         ax.legend(loc="upper right", fontsize="small")
@@ -117,7 +158,8 @@ def plot_coverage(
     output_path: str,
     start_pos: int = 0,
     chrom_name: str | None = None,
-    thresholds: list[int] | None = None,
+    below: list[int] | None = None,
+    above: list[int] | None = None,
 ):
     """Render a strip-style SVG showing threshold regions only.
 
@@ -133,9 +175,12 @@ def plot_coverage(
         Offset added to each x-axis label.
     chrom_name
         Subtitle / label for the contig being plotted.
-    thresholds
-        List of depth thresholds. For each threshold a colored track is drawn
+    below
+        Depth thresholds. For each threshold a colored track is drawn
         showing regions where mean coverage is strictly below that value.
+    above
+        Depth thresholds. For each threshold a colored track is drawn
+        showing regions where mean coverage is strictly above that value.
     """
     logger.info("Generating coverage strip plot → %s", output_path)
 
@@ -143,10 +188,11 @@ def plot_coverage(
     x = [p + start_pos for p in positions]
     mean_y, _ = _mean_std_at_positions(coverage_maps, positions)
 
-    fig, ax = plt.subplots(figsize=(12, 1.5 + 0.4 * (len(thresholds) if thresholds else 0)))
+    n_tracks = (len(below) if below else 0) + (len(above) if above else 0)
+    fig, ax = plt.subplots(figsize=(12, 1.5 + 0.4 * n_tracks))
 
-    if thresholds:
-        _draw_threshold_tracks(ax, mean_y, thresholds, x)
+    if below or above:
+        _draw_tracks(ax, mean_y, below=below, above=above, x=x)
 
     ax.set_xlabel("Base position")
     title = "Coverage threshold regions"
@@ -166,7 +212,8 @@ def plot_all(
     max_length: int,
     output_path: str,
     start_pos: int = 0,
-    thresholds: list[int] | None = None,
+    below: list[int] | None = None,
+    above: list[int] | None = None,
 ):
     """Produce a single SVG with one strip panel per reference.
 
@@ -185,7 +232,8 @@ def plot_all(
         logger.warning("No coverage data to plot.")
         return
 
-    strip_h = 1.5 + 0.4 * (len(thresholds) if thresholds else 0)
+    n_tracks = (len(below) if below else 0) + (len(above) if above else 0)
+    strip_h = 1.5 + 0.4 * n_tracks
     fig, axes = plt.subplots(n, 1, figsize=(12, strip_h * n), sharex=False)
     if n == 1:
         axes = [axes]
@@ -195,8 +243,8 @@ def plot_all(
         x = [p + start_pos for p in positions]
         mean_y, _ = _mean_std_at_positions(sample_maps, positions)
 
-        if thresholds:
-            _draw_threshold_tracks(ax, mean_y, thresholds, x)
+        if below or above:
+            _draw_tracks(ax, mean_y, below=below, above=above, x=x)
 
         ax.set_title(ref_name)
         ax.set_xlabel("Base position")

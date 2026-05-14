@@ -66,10 +66,10 @@ samcov *.bam --shared-low-coverage-bed shared_gaps.bed --low-coverage 5
 samcov *.bam --low-coverage-bed per_sample_gaps.bed --low-coverage 5
 
 # Generate a threshold strip plot (one panel per reference)
-samcov *.bam --plot-strips coverage_plot.svg --plot-thresholds 1,5,10
+samcov *.bam --plot-strips coverage_plot.svg --below 1,5,10 --above 50,100
 
 # Generate a single-panel threshold strip plot (single reference)
-samcov *.bam --plot-strip coverage_plot.svg --plot-thresholds 1,5,10
+samcov *.bam --plot-strip coverage_plot.svg --below 1,5,10
 ```
 
 ## CLI reference
@@ -101,26 +101,31 @@ usage: samcov [-h] [--csv CSV] [--centers-csv CENTERS_CSV]
 | `--consensus DIR` | Generate FASTA consensus via `samtools consensus` |
 | `--plot-strips PATH` | Multi-panel SVG threshold strip plot (one panel per reference) |
 | `--plot-strip PATH` | Single-panel SVG threshold strip plot (single reference) |
-| `--plot-thresholds 1,5,10` | Color-coded threshold strips showing mean coverage below each value |
+| `--below 1,5,10` | Threshold strips for regions with **mean coverage below** each value |
+| `--above 50,100` | Threshold strips for regions with **mean coverage above** each value |
 
 ### Threshold strip plots
 
-Generate compact strip-style SVGs showing where mean coverage falls below configurable thresholds:
+Generate compact strip-style SVGs showing where mean coverage falls **below** or **above** configurable thresholds:
 
 ```bash
-# Multi-panel strip — one panel per reference sequence
-samcov *.bam --plot-strips coverage.svg --plot-thresholds 1,5,10
+# Multi-panel strip — below and above thresholds on one plot
+samcov *.bam --plot-strips coverage.svg --below 1,5,10 --above 50,100
 
-# Single-panel strip — all thresholds on one axis
-samcov *.bam --plot-strip coverage.svg --plot-thresholds 1,5,10
+# Single-panel strip — only below-threshold regions
+samcov *.bam --plot-strip coverage.svg --below 1,5,10
+
+# Only high-coverage regions
+samcov *.bam --plot-strip coverage.svg --above 50,100
 ```
 
 - **X-axis**: base position (respects `--start-at`)
+- Below-threshold tracks sit below the axis, above-threshold tracks sit above
 - Each threshold renders as a horizontal colored strip
-- Colored segments appear wherever **mean coverage** is strictly below that threshold
+- Colored segments appear wherever **mean coverage** is strictly below (or above) that threshold
 - Tracks are stacked with small gaps for readability
 - Color-blind-friendly palette: red → orange → gold → green → blue
-- Legend labels show `<1×`, `<5×`, etc.
+- Legend labels show `<1×`, `<5×`, `>50×`, `>100×`, etc.
 
 ## Output formats
 
