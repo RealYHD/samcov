@@ -57,6 +57,12 @@ samcov *.bam --low-coverage-csv low_cov.csv --low-coverage 5
 
 # Find regions with depth < 5 in ALL samples (shared gaps)
 samcov *.bam --shared-low-coverage-csv shared_gaps.csv --low-coverage 5
+
+# Export shared gaps as BED for IGV / genome browsers
+samcov *.bam --shared-low-coverage-bed shared_gaps.bed --low-coverage 5
+
+# Export per-sample low-coverage regions as BED
+samcov *.bam --low-coverage-bed per_sample_gaps.bed --low-coverage 5
 ```
 
 ## CLI reference
@@ -65,6 +71,8 @@ samcov *.bam --shared-low-coverage-csv shared_gaps.csv --low-coverage 5
 usage: samcov [-h] [--csv CSV] [--centers-csv CENTERS_CSV]
               [--low-coverage-csv LOW_COVERAGE_CSV]
               [--shared-low-coverage-csv SHARED_LOW_COVERAGE_CSV]
+              [--low-coverage-bed LOW_COVERAGE_BED]
+              [--shared-low-coverage-bed SHARED_LOW_COVERAGE_BED]
               [--low-coverage LOW_COVERAGE]
               [--start-at START_AT] [--sparse] [--verbosity VERBOSITY]
               [--consensus CONSENSUS]
@@ -82,6 +90,10 @@ options:
                         Path to output low coverage ranges as a CSV.
   --shared-low-coverage-csv SHARED_LOW_COVERAGE_CSV
                         Path to output shared low-coverage ranges (across all samples) as a CSV.
+  --low-coverage-bed LOW_COVERAGE_BED
+                        Path to output per-sample low-coverage ranges as a BED file.
+  --shared-low-coverage-bed SHARED_LOW_COVERAGE_BED
+                        Path to output shared low-coverage ranges (across all samples) as a BED file.
   --low-coverage LOW_COVERAGE
                         A number that is to be considered low coverage. (default: 1)
   --start-at START_AT   Sets the first position.
@@ -129,6 +141,30 @@ Intervals where **all** samples have depth below the threshold. Use this to find
 
 Ranges are **zero-based, inclusive** by default. Use `--start-at` for one-based output.
 
+### Low-coverage BED (`--low-coverage-bed`)
+
+Per-sample low-coverage intervals in [BED6](https://genome.ucsc.edu/FAQ/FAQformat.html#format1) format:
+
+```
+.\t3\t5\tsample1.bam/ref\t0\t+
+.\t150\t156\tsample1.bam/ref\t0\t+
+.\t2\t6\tsample2.bam/ref\t0\t+
+```
+
+Columns: `chrom`, `start` (0-based), `end` (exclusive), `name`, `score`, `strand`.
+The chromosome defaults to `.` because `samcov` processes alignments agnostically.
+
+### Shared low-coverage BED (`--shared-low-coverage-bed`)
+
+Shared low-coverage intervals in BED6 format:
+
+```
+.\t3\t5\tshared_low_coverage\t0\t+
+.\t150\t156\tshared_low_coverage\t0\t+
+```
+
+Use `--start-at` to shift coordinates (e.g. for one-based reference indexing).
+
 ## Python API
 
 ```python
@@ -156,6 +192,10 @@ export.export_coverages_as_csv(coverage_maps, max_length, "coverage.csv", sparse
 export.export_centers_as_csv(centers, max_length, "centers.csv", sparse=False)
 export.export_low_coverage_csv(low_cov, max_length, "low_cov.csv")
 export.export_shared_low_coverage_csv(shared_gaps, max_length, "shared_gaps.csv", threshold=5)
+
+# Export to BED
+export.export_low_coverage_bed(low_cov, "low_cov.bed")
+export.export_shared_low_coverage_bed(shared_gaps, "shared_gaps.bed")
 ```
 
 ## Consensus generation
