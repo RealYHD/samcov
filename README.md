@@ -11,6 +11,7 @@ Extract per-base coverage from SAM/BAM alignment files, compute aggregate statis
 - **Statistical summaries** — mean, median, and mode coverage per position across samples
 - **Low-coverage region detection** — find contiguous gaps below a configurable depth threshold
 - **Consensus generation** — produce FASTA consensus sequences with `samtools consensus`
+- **Vector line plots** — export coverage trends as SVG (per-sample traces + total coverage line)
 - **CSV export** — sparse or dense output for downstream analysis in R, pandas, Excel, etc.
 
 ## System Requirements
@@ -63,6 +64,12 @@ samcov *.bam --shared-low-coverage-bed shared_gaps.bed --low-coverage 5
 
 # Export per-sample low-coverage regions as BED
 samcov *.bam --low-coverage-bed per_sample_gaps.bed --low-coverage 5
+
+# Generate a vector line plot (one panel per reference)
+samcov *.bam --plot-svg coverage_plot.svg
+
+# Generate a simple single-panel plot (single reference)
+samcov *.bam --plot-svg-simple coverage_plot.svg
 ```
 
 ## CLI reference
@@ -70,39 +77,47 @@ samcov *.bam --low-coverage-bed per_sample_gaps.bed --low-coverage 5
 ```
 usage: samcov [-h] [--csv CSV] [--centers-csv CENTERS_CSV]
               [--low-coverage-csv LOW_COVERAGE_CSV]
+              [--low-coverage LOW_COVERAGE] [--start-at START_AT] [--sparse]
+              [--verbosity VERBOSITY]
               [--shared-low-coverage-csv SHARED_LOW_COVERAGE_CSV]
-              [--low-coverage-bed LOW_COVERAGE_BED]
               [--shared-low-coverage-bed SHARED_LOW_COVERAGE_BED]
-              [--low-coverage LOW_COVERAGE]
-              [--start-at START_AT] [--sparse] [--verbosity VERBOSITY]
-              [--consensus CONSENSUS]
+              [--low-coverage-bed LOW_COVERAGE_BED] [--consensus CONSENSUS]
+              [--plot-svg PLOT_SVG] [--plot-svg-simple PLOT_SVG_SIMPLE]
               I [I ...]
-
-positional arguments:
-  I                     The SAM/BAM files to extract coverages upon.
-
-options:
-  -h, --help            show this help message and exit
-  --csv CSV             Path to output as a CSV
-  --centers-csv CENTERS_CSV
-                        Path to output as a CSV of center measures of each position.
-  --low-coverage-csv LOW_COVERAGE_CSV
-                        Path to output low coverage ranges as a CSV.
-  --shared-low-coverage-csv SHARED_LOW_COVERAGE_CSV
-                        Path to output shared low-coverage ranges (across all samples) as a CSV.
-  --low-coverage-bed LOW_COVERAGE_BED
-                        Path to output per-sample low-coverage ranges as a BED file.
-  --shared-low-coverage-bed SHARED_LOW_COVERAGE_BED
-                        Path to output shared low-coverage ranges (across all samples) as a BED file.
-  --low-coverage LOW_COVERAGE
-                        A number that is to be considered low coverage. (default: 1)
-  --start-at START_AT   Sets the first position.
-  --sparse              Whether or not output should be as sparse as possible.
-  --verbosity VERBOSITY
-                        Sets the verbosity of the output (default: INFO)
-  --consensus CONSENSUS
-                        Generates consensus sequences at the specified output directory.
 ```
+
+| Flag | Description |
+|------|-------------|
+| `--csv` | Dense or sparse per-position coverage CSV |
+| `--centers-csv` | Per-position mean / median / mode |
+| `--low-coverage-csv` | Low-coverage ranges per sample |
+| `--shared-low-coverage-csv` | Low-coverage ranges shared across **all** samples |
+| `--low-coverage-bed` | Per-sample low-coverage regions in BED6 |
+| `--shared-low-coverage-bed` | Shared low-coverage regions in BED6 |
+| `--low-coverage N` | Depth threshold (default: 1) |
+| `--start-at N` | Coordinate offset (e.g. 1 for 1-based output) |
+| `--sparse` | Omit rows where **all** samples have zero coverage |
+| `--verbosity LEVEL` | DEBUG, INFO, WARNING, ERROR |
+| `--consensus DIR` | Generate FASTA consensus via `samtools consensus` |
+| `--plot-svg PATH` | Multi-panel SVG line plot (one panel per reference) |
+| `--plot-svg-simple PATH` | Single-panel SVG line plot (single reference) |
+
+### Coverage line plots
+
+Generate publication-quality vector plots directly from the CLI:
+
+```bash
+# Multi-panel plot — one subplot per reference sequence
+samcov *.bam --plot-svg coverage.svg
+
+# Single-panel plot — all samples on one axis
+samcov *.bam --plot-svg-simple coverage.svg
+```
+
+- **X-axis**: base position (respects `--start-at`)
+- **Y-axis**: coverage depth
+- Each sample gets a translucent trace
+- A thick black line shows **total coverage** summed across all samples
 
 ## Output formats
 
@@ -168,7 +183,7 @@ Use `--start-at` to shift coordinates (e.g. for one-based reference indexing).
 ## Python API
 
 ```python
-from samcov import count, metrics, export
+from samcov import count, metrics, export, visualize
 
 # Load coverage from one or more BAMs
 coverage_maps, max_length = count.count_all_sam_positions(["sample1.bam", "sample2.bam"])
@@ -196,6 +211,10 @@ export.export_shared_low_coverage_csv(shared_gaps, max_length, "shared_gaps.csv"
 # Export to BED
 export.export_low_coverage_bed(low_cov, "low_cov.bed")
 export.export_shared_low_coverage_bed(shared_gaps, "shared_gaps.bed")
+
+# Generate SVG plots
+visualize.plot_coverage(coverage_maps, max_length, "coverage.svg")
+visualize.plot_all(coverage_maps, max_length, "multi_ref_coverage.svg")
 ```
 
 ## Consensus generation
@@ -212,9 +231,9 @@ generate_all_consensus("sample1.bam", "sample2.bam", output_folder="consensus/")
 ## Requirements
 
 - Python ≥ 3.10
-- `pysam` (handles SAM/BAM parsing)
 - `tqdm` (progress bars)
-- `samtools` (optional, only for consensus generation)
+- `matplotlib` (for SVG plots)
+- `samtools` (optional, required for consensus and coverage extraction)
 
 ## Development
 
