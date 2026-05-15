@@ -143,6 +143,30 @@ def test_cli_shared_low_coverage_bed(mock_export, mock_metrics, mock_count, tmp_
 
 
 @patch("samcov.cli.count.count_all_sam_positions")
+@patch("samcov.cli.metrics.calculate_shared_high_coverage")
+@patch("samcov.cli.export.export_shared_high_coverage_csv")
+def test_cli_shared_high_coverage_csv(mock_export, mock_metrics, mock_count, tmp_path):
+    p = tmp_path / "fake.bam"
+    p.write_text("")
+    mock_count.return_value = ({"fake.bam/ref": {0: 5}}, 1)
+    mock_metrics.return_value = []
+    run([str(p), "--shared-high-coverage-csv", str(tmp_path / "shared_high.csv"), "--high-coverage", "10"])
+    mock_export.assert_called_once()
+
+
+@patch("samcov.cli.count.count_all_sam_positions")
+@patch("samcov.cli.metrics.calculate_shared_high_coverage")
+@patch("samcov.cli.export.export_shared_high_coverage_bed")
+def test_cli_shared_high_coverage_bed(mock_export, mock_metrics, mock_count, tmp_path):
+    p = tmp_path / "fake.bam"
+    p.write_text("")
+    mock_count.return_value = ({"fake.bam/ref": {0: 5}}, 1)
+    mock_metrics.return_value = []
+    run([str(p), "--shared-high-coverage-bed", str(tmp_path / "shared_high.bed"), "--high-coverage", "10"])
+    mock_export.assert_called_once()
+
+
+@patch("samcov.cli.count.count_all_sam_positions")
 @patch("samcov.cli.metrics.calculate_consecutive_low_coverage")
 @patch("samcov.cli.export.export_low_coverage_bed")
 def test_cli_low_coverage_bed(mock_export, mock_metrics, mock_count, tmp_path):

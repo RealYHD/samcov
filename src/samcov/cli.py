@@ -102,6 +102,27 @@ def run(argv=None):
         default="",
     )
     parser.add_argument(
+        "--shared-high-coverage-csv",
+        type=str,
+        help="Path to output shared high-coverage ranges (across all samples) as a CSV.",
+        required=False,
+        default="",
+    )
+    parser.add_argument(
+        "--shared-high-coverage-bed",
+        type=str,
+        help="Path to output shared high-coverage ranges (across all samples) as a BED file.",
+        required=False,
+        default="",
+    )
+    parser.add_argument(
+        "--high-coverage",
+        type=int,
+        help="A number that is to be considered high coverage.",
+        required=False,
+        default=50,
+    )
+    parser.add_argument(
         "--low-coverage-bed",
         type=str,
         help="Path to output per-sample low-coverage ranges as a BED file.",
@@ -196,6 +217,24 @@ def run(argv=None):
         )
         export.export_shared_low_coverage_bed(
             shared_ranges, args.shared_low_coverage_bed, start_pos=start_pos
+        )
+    if args.shared_high_coverage_csv:
+        shared_high_ranges = metrics.calculate_shared_high_coverage(
+            coverage_maps, max_length, args.high_coverage
+        )
+        export.export_shared_high_coverage_csv(
+            shared_high_ranges,
+            max_length,
+            args.shared_high_coverage_csv,
+            args.high_coverage,
+            start_pos=start_pos,
+        )
+    if args.shared_high_coverage_bed:
+        shared_high_ranges = metrics.calculate_shared_high_coverage(
+            coverage_maps, max_length, args.high_coverage
+        )
+        export.export_shared_high_coverage_bed(
+            shared_high_ranges, args.shared_high_coverage_bed, start_pos=start_pos
         )
     if args.consensus:
         if not consensus.check_for_samtools():

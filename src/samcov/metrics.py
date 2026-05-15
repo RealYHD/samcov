@@ -123,3 +123,55 @@ def calculate_shared_low_coverage(
         shared_ranges.append([gap_start, length - 1])
 
     return shared_ranges
+
+
+def calculate_shared_high_coverage(
+    coverage_maps: dict[str, dict[int, int]],
+    length: int,
+    threshold: int = 50,
+):
+    """Find contiguous high-coverage regions shared across **all** samples.
+
+    A position is in a shared high-coverage region when **every** sample has
+    depth **>=** *threshold* at that position.  Adjacent positions are merged
+    into ``[start, end]`` intervals (inclusive, zero-based).
+
+    Parameters
+    ----------
+    coverage_maps
+        Mapping of ``sample_name → {position: depth}``.
+    length
+        Total length of the reference sequence.
+    threshold
+        Depth values >= this are treated as high coverage.  Default 50.
+
+    Returns
+    -------
+    list[list[int]]
+        List of ``[start, end]`` intervals where all samples are high.
+    """
+    logger.info("Finding shared high-coverage regions across all samples.")
+    logger.info(
+        "Positions where *all* samples have coverage >= %d will be reported.",
+        threshold,
+    )
+    shared_ranges: list[list[int]] = []
+    in_shared_high = False
+    high_start = 0
+
+    for pos in range(length):
+        all_high = all(
+            coverage_map.get(pos, 0) >= threshold
+            for coverage_map in coverage_maps.values()
+        )
+        if all_high and not in_shared_high:
+            high_start = pos
+            in_shared_high = True
+        elif not all_high and in_shared_high:
+            shared_ranges.append([high_start, pos - 1])
+            in_shared_high = False
+
+    if in_shared_high:
+        shared_ranges.append([high_start, length - 1])
+
+    return shared_ranges

@@ -90,3 +90,42 @@ def test_calculate_shared_low_coverage_none():
         "s2": {0: 5, 1: 0, 2: 5},
     }
     assert metrics.calculate_shared_low_coverage(cov, 3, threshold=1) == []
+
+
+# ── Shared high-coverage across all samples ───────────────────────
+
+def test_calculate_shared_high_coverage_basic():
+    """Regions where ALL samples have coverage >= threshold."""
+    cov = {
+        "s1": {0: 5, 1: 10, 2: 10, 3: 5},
+        "s2": {0: 5, 1: 10, 2: 12, 3: 5},
+    }
+    # Only positions 1 and 2 have ALL samples >= 10
+    assert metrics.calculate_shared_high_coverage(cov, 4, threshold=10) == [[1, 2]]
+
+
+def test_calculate_shared_high_coverage_trailing():
+    """Shared trailing high region to end of sequence."""
+    cov = {
+        "s1": {0: 5, 1: 10, 2: 10, 3: 10, 4: 10, 5: 10, 6: 10, 7: 10, 8: 10, 9: 10},
+        "s2": {0: 5, 1: 10, 2: 10, 3: 10, 4: 10, 5: 10, 6: 10, 7: 10, 8: 10, 9: 10},
+    }
+    assert metrics.calculate_shared_high_coverage(cov, 10, threshold=10) == [[1, 9]]
+
+
+def test_calculate_shared_high_coverage_all_high():
+    """Every position high in all samples."""
+    cov = {
+        "s1": {0: 10, 1: 10, 2: 10},
+        "s2": {0: 10, 1: 10, 2: 10},
+    }
+    assert metrics.calculate_shared_high_coverage(cov, 3, threshold=10) == [[0, 2]]
+
+
+def test_calculate_shared_high_coverage_none():
+    """No shared high-coverage regions at all."""
+    cov = {
+        "s1": {0: 5, 1: 10, 2: 5},
+        "s2": {0: 5, 1: 8, 2: 5},
+    }
+    assert metrics.calculate_shared_high_coverage(cov, 3, threshold=10) == []

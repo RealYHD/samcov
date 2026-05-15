@@ -59,8 +59,14 @@ samcov *.bam --low-coverage-csv low_cov.csv --low-coverage 5
 # Find regions with depth < 5 in ALL samples (shared gaps)
 samcov *.bam --shared-low-coverage-csv shared_gaps.csv --low-coverage 5
 
+# Find regions with depth >= 50 in ALL samples (shared high-coverage)
+samcov *.bam --shared-high-coverage-csv shared_high.csv --high-coverage 50
+
 # Export shared gaps as BED for IGV / genome browsers
 samcov *.bam --shared-low-coverage-bed shared_gaps.bed --low-coverage 5
+
+# Export shared high-coverage as BED
+samcov *.bam --shared-high-coverage-bed shared_high.bed --high-coverage 50
 
 # Export per-sample low-coverage regions as BED
 samcov *.bam --low-coverage-bed per_sample_gaps.bed --low-coverage 5
@@ -81,7 +87,10 @@ usage: samcov [-h] [--csv CSV] [--centers-csv CENTERS_CSV]
               [--verbosity VERBOSITY]
               [--shared-low-coverage-csv SHARED_LOW_COVERAGE_CSV]
               [--shared-low-coverage-bed SHARED_LOW_COVERAGE_BED]
-              [--low-coverage-bed LOW_COVERAGE_BED] [--consensus CONSENSUS]
+              [--shared-high-coverage-csv SHARED_HIGH_COVERAGE_CSV]
+              [--shared-high-coverage-bed SHARED_HIGH_COVERAGE_BED]
+              [--high-coverage HIGH_COVERAGE] [--low-coverage-bed LOW_COVERAGE_BED]
+              [--consensus CONSENSUS]
               [--plot-strips PLOT_STRIPS] [--plot-strip PLOT_STRIP]
               I [I ...]
 ```
@@ -92,9 +101,12 @@ usage: samcov [-h] [--csv CSV] [--centers-csv CENTERS_CSV]
 | `--centers-csv` | Per-position mean / median / mode |
 | `--low-coverage-csv` | Low-coverage ranges per sample |
 | `--shared-low-coverage-csv` | Low-coverage ranges shared across **all** samples |
-| `--low-coverage-bed` | Per-sample low-coverage regions in BED6 |
 | `--shared-low-coverage-bed` | Shared low-coverage regions in BED6 |
-| `--low-coverage N` | Depth threshold (default: 1) |
+| `--shared-high-coverage-csv` | High-coverage ranges shared across **all** samples |
+| `--shared-high-coverage-bed` | Shared high-coverage regions in BED6 |
+| `--low-coverage-bed` | Per-sample low-coverage regions in BED6 |
+| `--low-coverage N` | Depth threshold for low coverage (default: 1) |
+| `--high-coverage N` | Depth threshold for high coverage (default: 50) |
 | `--start-at N` | Coordinate offset (e.g. 1 for 1-based output) |
 | `--sparse` | Omit rows where **all** samples have zero coverage |
 | `--verbosity LEVEL` | DEBUG, INFO, WARNING, ERROR |
@@ -188,6 +200,28 @@ Shared low-coverage intervals in BED6 format:
 
 Use `--start-at` to shift coordinates (e.g. for one-based reference indexing).
 
+### Shared high-coverage CSV (`--shared-high-coverage-csv`)
+
+| start | end | length | threshold |
+|------:|----:|-------:|----------:|
+| 50 | 99 | 50 | 50 |
+| 200 | 250 | 51 | 50 |
+
+Intervals where **all** samples have depth **>=** the threshold. Use this to find universally well-covered regions.
+
+Ranges are **zero-based, inclusive** by default. Use `--start-at` for one-based output.
+
+### Shared high-coverage BED (`--shared-high-coverage-bed`)
+
+Shared high-coverage intervals in BED6 format:
+
+```
+.\t50\t100\tshared_high_coverage\t0\t+
+.\t200\t251\tshared_high_coverage\t0\t+
+```
+
+Use `--start-at` to shift coordinates.
+
 ## Python API
 
 ```python
@@ -207,18 +241,20 @@ centers = metrics.measure_centers(coverage_maps, max_length)
 # Find contiguous low-coverage regions in ANY sample (depth < 5)
 low_cov = metrics.calculate_consecutive_low_coverage(coverage_maps, max_length, threshold=5)
 
-# Find contiguous low-coverage regions in ALL samples (shared gaps)
-shared_gaps = metrics.calculate_shared_low_coverage(coverage_maps, max_length, threshold=5)
+# Find contiguous high-coverage regions in ALL samples (shared peaks)
+shared_peaks = metrics.calculate_shared_high_coverage(coverage_maps, max_length, threshold=50)
 
 # Export to CSV
 export.export_coverages_as_csv(coverage_maps, max_length, "coverage.csv", sparse=False)
 export.export_centers_as_csv(centers, max_length, "centers.csv", sparse=False)
 export.export_low_coverage_csv(low_cov, max_length, "low_cov.csv")
 export.export_shared_low_coverage_csv(shared_gaps, max_length, "shared_gaps.csv", threshold=5)
+export.export_shared_high_coverage_csv(shared_peaks, max_length, "shared_peaks.csv", threshold=50)
 
 # Export to BED
 export.export_low_coverage_bed(low_cov, "low_cov.bed")
 export.export_shared_low_coverage_bed(shared_gaps, "shared_gaps.bed")
+export.export_shared_high_coverage_bed(shared_peaks, "shared_peaks.bed")
 
 # Generate SVG plots
 visualize.plot_coverage(coverage_maps, max_length, "coverage.svg")

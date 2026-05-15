@@ -157,3 +157,42 @@ def export_shared_low_coverage_bed(
             bed_stream.write(
                 f"{chrom}\t{bed_start}\t{bed_end}\t{name}\t0\t+\n"
             )
+
+
+def export_shared_high_coverage_csv(
+    ranges: list[list[int]],
+    length: int,
+    output_path: str,
+    threshold: int,
+    start_pos: int = 0,
+):
+    """Export shared high-coverage intervals as a CSV."""
+    logger.info("Beginning export of shared high coverage areas CSV")
+    with open(output_path, "w") as stream:
+        writer = csv.writer(stream)
+        writer.writerow(["start", "end", "length", "threshold"])
+        for start, end in ranges:
+            writer.writerow([
+                start + start_pos,
+                end + start_pos,
+                end - start + 1,
+                threshold,
+            ])
+
+
+def export_shared_high_coverage_bed(
+    ranges: list[list[int]],
+    output_path: str,
+    start_pos: int = 0,
+    chrom: str = ".",
+    name: str = "shared_high_coverage",
+):
+    """Export shared high-coverage intervals as a BED file."""
+    logger.info("Beginning export of shared high-coverage regions as BED")
+    with open(output_path, "w") as bed_stream:
+        for start, end in ranges:
+            bed_start = start + start_pos
+            bed_end = end + start_pos + 1  # BED end is exclusive
+            bed_stream.write(
+                f"{chrom}\t{bed_start}\t{bed_end}\t{name}\t0\t+\n"
+            )
