@@ -250,6 +250,7 @@ def plot_all(
         ax.set_xlabel("Base position")
         _style_strip_axes(ax)
 
+    fig.suptitle("Coverage maps", fontsize="x-large", y=1.02)
     fig.tight_layout()
     fig.savefig(output_path, format="svg")
     plt.close(fig)
