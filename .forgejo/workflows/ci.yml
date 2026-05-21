@@ -54,6 +54,8 @@ jobs:
           rattler-build --version
 
       - name: Install Node deps
+        env:
+          NPM_TOKEN: ${{ secrets.PKG_RELEASE_TOKEN }}
         run: npm ci
 
       - name: Git identity
@@ -68,5 +70,7 @@ jobs:
           GIT_COMMITTER_NAME: semantic-release
           GIT_COMMITTER_EMAIL: <>
           PACKAGE_UPLOAD_TOKEN: ${{ secrets.PACKAGE_UPLOAD_TOKEN }}
+          FORGEJO_TOKEN: ${{ secrets.PKG_RELEASE_TOKEN }}
+          FORGEJO_URL: "https://git.reslate.solutions"
           HUSKY: 0
         run: npx semantic-release

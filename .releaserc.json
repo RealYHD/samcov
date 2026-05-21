@@ -6,6 +6,9 @@
     ["@semantic-release/exec", {
       "prepareCmd": "uv run -q python scripts/update_version.py ${nextRelease.version} && uv build",
       "publishCmd": "export VERSION=${nextRelease.version} && bash scripts/publish.sh"
+    }],
+    ["@ross/semantic-release-forgejo", {
+      "forgejoUrl": "https://git.reslate.solutions"
     }]
   ]
 }
